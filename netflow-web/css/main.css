@@ -1,0 +1,453 @@
+body {
+ cursor:default;
+ margin:0;
+ padding:0;
+ left:0px;
+ top:0px;
+ background:#000000;
+ color:#ffffff;
+ font-family:"Lucida Console";
+}
+
+.mainwrapper {
+ width:100%;
+ height:100%;
+ display:block
+}
+
+.mainmenu {
+ width:100%;
+ height:20px;
+ border-bottom-width:1px;
+ border-bottom-style:solid;
+ border-bottom-color:grey;
+}
+
+.mainmenuitem {
+# width:100px;
+ padding-left: 5px;
+ padding-right: 5px;
+ height:100%;
+ display:table;
+ float:left;
+ border-right-width:1px;
+ border-right-style:dashed;
+ border-right-color:grey;
+}
+
+.mainmenuitemtext {
+ width:100%;
+ display:table-cell;
+ vertical-align:middle;
+ line-height:normal;
+ text-align:center;
+ cursor:default;
+ font-size:small;
+}
+
+.top_menu_window {
+ background:#000000;
+ padding-top:5px;
+ padding-bottom:5px;
+ border-style:solid;
+ border-width:1px;
+ position:absolute;
+ top:20px;
+}
+
+.top_menu_item {
+ padding:5px;
+}
+
+.mainworkspace {
+ width:100%;
+ height:calc(100% - 70px);
+ display:flex;
+ flex-direction:column;
+}
+
+.main_toolbar {
+ width:100%;
+ border-bottom:1px solid;
+ padding-top:5px;
+ padding-bottom:5px;
+ display:flex;
+ flex-direction:row;
+ -webkit-touch-callout: none; /* iOS Safari */
+   -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+      -moz-user-select: none; /* Old versions of Firefox */
+       -ms-user-select: none; /* Internet Explorer/Edge */
+           user-select: none; /* Non-prefixed version, currently
+                                 supported by Chrome, Edge, Opera and Firefox */
+}
+
+.toolbar_row {
+# width:100%;
+ display:flex;
+ flex-direction:row;
+}
+
+.toolbar_item {
+ padding-top:5px;
+ padding-bottom:5px;
+ width:80px;
+ display:flex;
+ flex-direction:column;
+}
+
+.toolbar_item_img {
+ margin-left: auto;
+ margin-right: auto;
+ width:18px;
+ height:18px;
+}
+
+.toolbar_item_text {
+ padding-top:5px;
+ width:100%;
+ text-align:center;
+ font-size:small;
+}
+
+.tabs {
+ width:100%;
+ background:#202020;
+ padding-top:10px;
+ margin:0 auto;
+ border-bottom-width:1px;
+ border-bottom-style:solid;
+ border-bottom-color:grey;
+ -webkit-touch-callout: none; /* iOS Safari */
+   -webkit-user-select: none; /* Safari */
+    -khtml-user-select: none; /* Konqueror HTML */
+      -moz-user-select: none; /* Old versions of Firefox */
+       -ms-user-select: none; /* Internet Explorer/Edge */
+           user-select: none; /* Non-prefixed version, currently
+                                 supported by Chrome, Edge, Opera and Firefox */
+}
+
+.tab_input {
+ display:none;
+ position:absolute;
+}
+
+.tab_label {
+ display:inline-block;
+ margin:0 0 -1px;
+ padding:5px 25px;
+ font-weight:600;
+ text-align:center;
+ color:#aaa;
+ border:0px solid grey;
+ border-width:1px 1px 1px 1px;
+ background:#f1f1f1;
+ border-radius:3px 3px 0 0;
+ font-size:small;
+}
+
+.tabs>input:checked+label {
+ color:#fff;
+ border-bottom-color:#000;
+ background:#000;
+}
+
+
+.tabs>input#device-tab:checked ~ .mainworkspace>section#content-device-tab, #network-tab:checked ~ section#content-network-tab {
+    display:block;
+    color:#fff;
+}
+
+.mainworkspace>section {
+ width:100%;
+ height:100%;
+ overflow-x:hidden;
+ overflow-y:auto;
+}
+
+.visible {
+ display:block;
+}
+
+.invisible {
+ display:none;
+}
+
+.loading_img {
+ width:80px;
+ height:60px;
+ position:absolute;
+ top:calc(50% - 30px);
+ left:calc(50% - 40px);
+}
+
+.loading_text {
+ position:absolute;
+ width:100%;
+ top:calc(50% + 30px);
+ text-align:center;
+}
+
+.tab_content {
+ width:100%;
+}
+
+.class_header {
+ font-size:large;
+ font-weight:bold;
+ height:30px;
+ padding-top:20px;
+# padding-left:10px;
+ padding-bottom:0px;
+}
+
+.class_table {
+ width:100%;
+}
+
+.class_table_row, .class_table_row_header, .class_table_row_label, .class_table_row_highlight {
+ width:100%;
+ padding-top:2px;
+ padding-bottom:2px;
+ display:flex;
+ flex-direction:row;
+}
+
+.class_table_row {
+ font-size:small;
+}
+
+.class_table_row_highlight {
+ font-size:small;
+ color:#000000;
+ background:#f1f1f1;
+}
+
+.class_table_row_header {
+ font-size:small;
+ font-weight:bold;
+}
+
+.class_table_row_label {
+ font-size:large;
+}
+
+
+.class_table_cell, .class_table_cell_0, .class_table_cell_3, .class_table_cell_5, .class_table_cell_10, .class_table_cell_15, .class_table_cell_20, .class_table_cell_25, .class_table_cell_30, .class_table_cell_40, .class_table_cell_50,
+.class_table_label, .class_table_label_3, .class_table_label_5, .class_table_label_10, .class_table_label_15, .class_table_label_20, .class_table_label_25, .class_table_label_30, .class_table_label_40, .class_table_label_50 {
+ margin-left:5px;
+ margin-right:5px;
+ margin-top:auto;
+ margin-bottom:auto;
+}
+
+.class_table_label, .class_table_label_0, .class_table_label_3, .class_table_label_5, .class_table_label_10, .class_table_label_15, .class_table_label_20, .class_table_label_25, .class_table_label_30, .class_table_label_40, .class_table_label_50 {
+ text-align:right;
+}
+
+.class_table_cell, .class_table_label {
+ margin-right:auto;
+}
+.class_table_cell_0, .class_table_label_0 {
+ display:flex;
+}
+.class_table_cell_3, .class_table_label_3 {
+ display:flex;
+ width:3%;
+}
+.class_table_cell_5, .class_table_label_5 {
+ width:5%;
+}
+.class_table_cell_10, .class_table_label_10 {
+ width:10%;
+}
+.class_table_cell_15, .class_table_label_15 {
+ width:15%;
+}
+.class_table_cell_20, .class_table_label_20 {
+ width:20%;
+}
+.class_table_cell_25, .class_table_label_25 {
+ width:25%;
+}
+.class_table_cell_30, .class_table_label_30 {
+ width:30%;
+}
+.class_table_cell_40, .class_table_label_40 {
+ width:40%;
+}
+.class_table_cell_50, .class_table_label_50 {
+ width:50%;
+}
+
+.menubox {
+ font-family:"Lucida Console";
+ display:flex;
+ flex-direction:column;
+ position:absolute;
+ background:#000000;
+ color:white;
+ border:1px solid grey;
+ padding-left:5px;
+ padding-right:5px;
+}
+
+.menuitem, .menuitem_last, .menuitem_selected {
+ position:relative;
+ background:#000000;
+ display:table;
+ width:100%;
+ padding-top:5px;
+}
+
+.menuitem {
+ border-bottom:1px solid grey;
+}
+
+.invisible {
+ display:none;
+}
+
+.substrate-form {
+ top:0px;
+ left:0px;
+ position:absolute;
+ height:100%;
+ width:100%;
+ background:#f0f0f0;
+ opacity: 0.5;
+}
+
+.transparent_splash {
+ position:absolute;
+ top: 0px;
+ left:0px;
+ height:100%;
+ width:100%;
+ background:#000000;
+ opacity:0%;
+}
+
+.process_splash {
+ position:absolute;
+ top: 0px;
+ left:0px;
+ height:100%;
+ width:100%;
+ background:#000000;
+}
+
+.dialogue_stage {
+ position:absolute;
+ top:0px;
+ left:0px;
+ height:100%;
+ width:100%;
+ background:rgba(0,0,0,0.5);
+ display:flex;
+ flex-direction:column;
+}
+
+.dialogue_vertical_spacer, .dialogue_horizontal_spacer {
+ margin:auto;
+}
+
+.dialogue_central {
+ display:flex;
+ flex-direction:row;
+}
+
+.dialogue_window {
+ width:500px;
+ height:400px;
+ background:#FFFFFF;
+ opacity:1;
+}
+
+.dialogue_body {
+ height:100%;
+ width:100%;
+ display:flex;
+ flex-direction:column;
+}
+
+.dialogue_label {
+ color:#000000;
+ margin:10px;
+}
+
+.dialogue_form {
+ margin-top:auto;
+ margin-bottom:auto;
+ display:flex;
+ flex-direction:column;
+}
+
+.dialogue_row {
+ color:#000000;
+ width:100%;
+ display:flex;
+ flex-direction:row;
+}
+
+.dialogue_row_spacer {
+ margin:0px;
+ color:#000000;
+ height:20px;
+ width:100%;
+ display:flex;
+ flex-direction:row;
+}
+
+.dialogue_row_label {
+ margin-top:auto;
+ margin-bottom:auto;
+ width:30%;
+ text-align: right;
+ vertical-align: middle;
+}
+
+.dialogue_row_input {
+ margin:auto;
+ width:65%;
+ text-align: left;
+ vertical-align: middle;
+}
+
+.dialogue_bottom_line {
+ color:#000000;
+ margin:10px;
+ display:flex;
+ flex-direction:row;
+}
+
+.dialogue_button {
+ margin:10px;
+ width:120px;
+ height:30px;
+ text-align: center;
+ vertical-align: middle;
+ line-height: 30px;
+ border-style:solid;
+ border-width: 2px;
+}
+
+/* unvisited link */
+a:link {
+  color: cyan;
+}
+
+/* visited link */
+a:visited {
+  color: green;
+}
+
+/* mouse over link */
+a:hover {
+  color: yellow;
+}
+
+/* selected link */
+a:active {
+  color: blue;
+}

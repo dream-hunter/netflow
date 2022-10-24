@@ -1,0 +1,64 @@
+{
+    "collector" : {
+        "db" : {
+            "dbengine" : "Pg",
+            "dbhost"   : "127.0.0.1",
+            "dbname"   : "netflow",
+            "dbuser"   : "netflow",
+            "dbpass"   : "netflow"
+        },
+        "options" : {
+            "listenport"             : 9998,
+            "device_update_interval" : 10,
+            "bincleanup"             : 86400
+        }
+    },
+    "analyzer" : {
+        "srcdb" : {
+            "127.0.0.1": {
+                "dbengine" : "Pg",
+                "dbhost"   : "127.0.0.1",
+                "dbname"   : "netflow",
+                "dbuser"   : "netflow",
+                "dbpass"   : "netflow"
+            }
+        },
+        "dstdb" : {
+            "127.0.0.1": {
+                "dbengine" : "Pg",
+                "dbhost"   : "127.0.0.1",
+                "dbname"   : "netflow",
+                "dbuser"   : "netflow",
+                "dbpass"   : "netflow"
+            }
+        },
+        "options" : {
+            "bincleanup"    : 86400,
+            "data-interval" : 300
+        }
+    },
+    "monitor" : {
+        "srcdb" : {
+            "127.0.0.1": {
+                "dbengine" : "Pg",
+                "dbhost"   : "127.0.0.1",
+                "dbname"   : "netflow",
+                "dbuser"   : "netflow",
+                "dbpass"   : "netflow"
+            }
+        },
+        "dstdb" : {
+            "127.0.0.1": {
+                "dbengine" : "Pg",
+                "dbhost"   : "127.0.0.1",
+                "dbname"   : "netflow",
+                "dbuser"   : "netflow",
+                "dbpass"   : "netflow"
+            }
+        },
+        "options" : {
+            "bincleanup"    : 86400,
+            "data-interval" : 300
+        }
+    }
+}
