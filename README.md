@@ -227,7 +227,8 @@ If you gather netflow v9 information, you have to enable v9templates as well. Se
 
  **0.1.1alpha**
 
-- 01.08.2022 - Project published on GitHub
+- 24.10.2022 - Separate collector and analyzer allow the use of a scalable netflow gathering system.
+- 01.08.2022 - Project published on GitHub.
 - 12.07.2022 - Added external links to dashboard.
 - 07.07.2022 - Added charts to raw data tab.
 - 04.07.2022 - Minor bugfixes.
