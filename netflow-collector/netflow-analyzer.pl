@@ -144,6 +144,7 @@ sub binanalyze {
             }
         }
     }
+    logmessage("Sleep before start again\n", 10);
     sleep (10);
     return 1;
 }
