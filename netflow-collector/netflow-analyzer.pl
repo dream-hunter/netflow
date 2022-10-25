@@ -174,7 +174,8 @@ sub gettemplates {
             my $template->{"fields"} = $result->{"fields"};
             push(@{ $template->{"values"} }, $val);
             $template = table_serialise($template, "template_id", $loglevel);
-            $templates->{$device_id}->{$template_id} = dclone $template->{$template_id};
+            $templates->{$device_id} = dclone $devices->{$device_id};
+            $templates->{$device_id}->{'templates'}->{$template_id} = dclone $template->{$template_id};
         }
     }
 #    print Dumper $templates;
