@@ -157,7 +157,7 @@ psql -U postgres -a -f dbinstall.sql
 psql -U postgres -a -f ipfix.sql
 cd ..
 cp config.json.orig config.json
-./netflow.pl
+./netflow-collector.pl
 ```
 Ubuntu:
 ```
@@ -166,16 +166,22 @@ psql -U postgres -a -f dbinstall.sql
 psql -U postgres -a -f ipfix.sql
 cd ..
 sudo cp config.json.orig config.json
-./netflow.pl
+./netflow-collector.pl
 ```
 
 if there is no error messages and it continue work press ctrl+c and start it as daemon
+
+FreeBSD
 
 ```
 ./netflow-collector.pl -daemonize
 ./netflow-analyzer.pl -daemonize
 ```
-
+Ubuntu
+```
+sudo /bin/perl ./netflow-collector.pl -daemonize
+sudo /bin/perl ./netflow-analyzer.pl -daemonize
+```
 Automatic launch after reboot:
 
 FreeBSD:
