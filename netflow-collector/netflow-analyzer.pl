@@ -135,7 +135,8 @@ sub binanalyze {
 
             my $time   = int(time()/$dstconf->{'options'}->{'data-interval'})*$dstconf->{'options'}->{'data-interval'} - $dstconf->{'options'}->{'data-interval'};
 
-            foreach my $device (values %{ $devices }) {
+#            foreach my $device (values %{ $devices }) {
+            foreach my $device (values %{ $templates }) {
                 if ($device->{'device_enabled'} == 1 && defined $device->{'templates'}) {
                     v9binanalyze($srcconf,$dstconf,$device,$time,$ipfix,$conv,$export_count,$loglevel);
                 } else {
