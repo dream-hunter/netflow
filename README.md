@@ -50,11 +50,21 @@ FreeBSD:
 pkg update
 pkg upgrade
 ```
+Ubuntu:
+```
+sudo apt update
+sudo apt upgrade
+```
+
 3. Install required software
 
 FreeBSD:
 ```
 pkg install perl5 p5-App-cpanminus p5-App-cpanoutdated postgresql13-server git apache24 php81 php81-pgsql mod_php81 php81-extensions
+```
+Ubuntu:
+```
+sudo apt install perl cpanminus cpanoutdated git postgresql libdbd-pg-perl apache2 php8.1 php8.1-pgsql
 ```
 
 4. Configure, initiate and start your DB server.
@@ -65,6 +75,34 @@ echo postgresql_enable="YES" >> /etc/rc.conf
 /usr/local/etc/rc.d/postgresql initdb
 /usr/local/etc/rc.d/postgresql start
 ```
+Ubuntu:
+```
+sudo passwd postgres
+sudo nano /etc/postgresql/14/main/pg_hba.conf
+```
+
+```
+# Edit pg_hba.conf similar to this.
+
+# Database administrative login by Unix domain socket
+#local   all             postgres                                peer
+local   all             postgres                                trust
+
+# TYPE  DATABASE        USER            ADDRESS                 METHOD
+
+# "local" is for Unix domain socket connections only
+#local   all             all                                     peer
+local   all             all                                     trust
+
+Ctrl+S
+Ctrl+X
+```
+
+```
+sudo service postgresql restart
+```
+
+Read more how to improve PostgreSQL security on your server
 
 5. Update/Install Perl modules
 
@@ -72,7 +110,13 @@ FreeBSD:
 ```
 cpanm App::cpanoutdated
 cpan-outdated -p | cpanm
-cpanm Data::Dumper DBI DBD::Pg JSON DateTime
+cpanm Data::Dumper DBI DBD::Pg JSON DateTime Daemon::Daemonize
+```
+Ubuntu
+```
+sudo cpanm App::cpanoutdated
+sudo cpan-outdated -p | sudo cpanm
+sudo cpanm Data::Dumper DBI DBD::Pg JSON DateTime Daemon::Daemonize
 ```
 
 6. Configure and start Web-Server
@@ -94,14 +138,19 @@ Edit dir_module section:
 ```
 
 7. Install Netflow
-
+FreeBSD
 ```
 cd /usr/local/share/
 git clone https://git.code.sf.net/p/netflow/code netflow
 ```
+Ubuntu:
+```
+cd /usr/local/share/
+sudo git clone https://git.code.sf.net/p/netflow/code netflow
+```
 
 8. Configure and launch collector
-
+FreeBSD:
 ```
 cd /usr/local/share/netflow/netflow-collector/pgsql
 psql -U postgres -a -f dbinstall.sql
@@ -110,25 +159,49 @@ cd ..
 cp config.json.orig config.json
 ./netflow.pl
 ```
+Ubuntu:
+```
+cd /usr/local/share/netflow/netflow-collector/pgsql
+psql -U postgres -a -f dbinstall.sql
+psql -U postgres -a -f ipfix.sql
+cd ..
+sudo cp config.json.orig config.json
+./netflow.pl
+```
 
 if there is no error messages and it continue work press ctrl+c and start it as daemon
 
 ```
-./netflow.pl -daemonize
+./netflow-collector.pl -daemonize
+./netflow-analyzer.pl -daemonize
 ```
 
 Automatic launch after reboot:
 
+FreeBSD:
 ```
-@reboot cd /usr/local/share/netflow/netflow-collector && /usr/local/bin/perl netflow.pl -daemonize > /dev/null 2>&1
+@reboot cd /usr/local/share/netflow/netflow-collector && /usr/local/bin/perl netflow-collector.pl -daemonize > /dev/null 2>&1
+@reboot cd /usr/local/share/netflow/netflow-collector && /usr/local/bin/perl netflow-analyzer.pl -daemonize > /dev/null 2>&1
+```
+Ubuntu:
+```
+@reboot cd /usr/local/share/netflow/netflow-collector && /usr/bin/perl netflow-collector.pl -daemonize > /dev/null 2>&1
+@reboot cd /usr/local/share/netflow/netflow-collector && /usr/bin/perl netflow-analyzer.pl -daemonize > /dev/null 2>&1
 ```
 
 9. Configure Netflow Web interface
 
+FreeBSD:
 ```
 ln -s /usr/local/share/netflow/netflow-web /usr/local/www/apache24/data/netflow
 cd /usr/local/share/netflow/netflow-web/php
 cp config-orig.php config.php
+```
+Ubuntu:
+```
+sudo ln -s /usr/local/share/netflow/netflow-web /var/www/html/netflow
+cd /usr/local/share/netflow/netflow-web/php
+sudo cp config-orig.php config.php
 ```
 
 Warning: This is a simpliest insecure example. It's better to use SSL.
@@ -227,8 +300,7 @@ If you gather netflow v9 information, you have to enable v9templates as well. Se
 
  **0.1.1alpha**
 
-- 24.10.2022 - Separate collector and analyzer allow the use of a scalable netflow gathering system.
-- 01.08.2022 - Project published on GitHub.
+- 01.08.2022 - Project published on GitHub
 - 12.07.2022 - Added external links to dashboard.
 - 07.07.2022 - Added charts to raw data tab.
 - 04.07.2022 - Minor bugfixes.
