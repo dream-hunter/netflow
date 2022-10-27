@@ -22,7 +22,7 @@ use service_handler qw { dec2ip ip2dec table_serialise data_serialise };
 use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete};
 
 logmessage ("Begin programm...\n",10);
-my $loglevel    = 7;
+my $loglevel    = 10;
 my $configfile  = 'config.json';
 
 my $analyzethread = undef;
