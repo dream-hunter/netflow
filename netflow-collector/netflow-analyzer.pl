@@ -10,9 +10,9 @@ use Data::Dumper;
 use JSON::PP::Boolean;
 use Storable qw(dclone);
 
-use threads;
-use Thread;
-use Thread::Queue;
+#use threads;
+#use Thread;
+#use Thread::Queue;
 
 use Daemon::Daemonize qw( daemonize write_pidfile );
 
@@ -22,13 +22,12 @@ use service_handler qw { dec2ip ip2dec table_serialise data_serialise };
 use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete};
 
 logmessage ("Begin programm...\n",10);
-my $loglevel    = 10;
+my $loglevel    = 5;
 my $configfile  = 'config.json';
 
 my $analyzethread = undef;
 my $devices = undef;
 my $templates = undef;
-#my $time = time();
 
 my $globalconfig  = getconfig("config.json",$loglevel-4);
 my $config        = dclone $globalconfig->{"analyzer"};
@@ -67,20 +66,7 @@ if (defined $ARGV[0] && $ARGV[0] eq "-daemonize") {
 
 sub main_proc {
     while(!$sighup) {
-        if (defined $analyzethread) {
-            if ($analyzethread->is_joinable || !$analyzethread->is_running) {
-                $analyzethread->join;
-                undef $analyzethread;
-                $analyzethread=threads->new(\&binanalyze,$config,$loglevel);
-            }
-        } else {
-            logmessage("Service thread does not exists. Starting up and sending data...\n", $loglevel-3);
-            $analyzethread=threads->new(\&binanalyze,$config,$loglevel);
-        }
-    }
-    #Joining threads
-    foreach my $thr(threads->list) {
-        $thr->join;
+        binanalyze($config,$loglevel);
     }
     return "END";
 }
@@ -146,7 +132,8 @@ sub binanalyze {
         }
     }
     logmessage("Sleep before start again\n", 10);
-    sleep (10);
+    sleep 10;
+
     return 1;
 }
 
@@ -166,6 +153,7 @@ sub gettemplates {
     my $devices  = $_[1];
     my $loglevel = $_[2];
 
+    my $templates = dclone $devices;
     my $result = pgsql_table_select($config,"SELECT * FROM v9templates;", $loglevel+10);
     foreach my $val (values @{ $result->{"values"} }) {
         my @str = split(",", $val);
