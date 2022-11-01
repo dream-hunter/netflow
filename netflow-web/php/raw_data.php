@@ -12,14 +12,14 @@ if ($user['group_reader'] != 't') {
     exit(0);
 }
 
-$conn_str = "host=$database_hostname port=5432 dbname=$database_dbname user=$database_username password=$database_password";
+$conn_str = "host=$database_hostname port=5432 dbname=$database_name user=$database_username password=$database_password";
 $dbi = pg_connect($conn_str) OR DIE("Can't connect to database");
 
 if (isset($_GET['tbl']) && isset($_GET['ipv4']) && isset($_GET['start']) && isset($_GET['end']) && isset($_GET['interval'])) {
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"", "sum(\"packetDeltaCount\") as \"packetDeltaCount\"");
     $fieldlist = array("sourceIPv4Address", "destinationIPv4Address", "ingressInterface", "egressInterface", "sourceTransportPort", "destinationTransportPort", "protocolIdentifier", "ipClassOfService");
-    $tablename_raw = "raw_" . $_GET['tbl'];
-    $tablename_tmp = "tmp_" . $_GET['tbl'];
+    $tablename_raw = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_tmp = "\"$analyzer_schema\".\"tmp_" . $_GET['tbl'] . "\"";
     if (isset ($_GET['groupbysrcip'])) {
         $fieldlist = array("sourceIPv4Address", "sourceTransportPort", "protocolIdentifier");
     } else if (isset ($_GET['groupbydstip'])) {

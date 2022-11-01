@@ -1,8 +1,10 @@
 <?php
-$database_dbname   = "netflow";
-$database_hostname = "localhost";
+$database_hostname = "127.0.0.1";
+$database_name     = "netflow";
 $database_username = "netflow";
 $database_password = "netflow";
+$dashboard_schema  = "dashboard";
+$analyzer_schema   = "analyzer";
 
 $defaultro = '';
 $defaultrw = '';

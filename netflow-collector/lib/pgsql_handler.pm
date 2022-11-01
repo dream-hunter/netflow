@@ -3,8 +3,8 @@ package pgsql_handler;
 $VERSION     = 1.00;
 @ISA         = qw(Exporter);
 @EXPORT      = ();
-@EXPORT_OK   = qw(pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete);
-%EXPORT_TAGS = ( DEFAULT => [qw(&pgsql_check &pgsql_table_insert &pgsql_table_insert_from &pgsql_table_select &pgsql_table_drop &pgsql_table_create &pgsql_table_check &pgsql_table_delete)]);
+@EXPORT_OK   = qw(pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete pgsql_tables_list pgsql_table_update);
+%EXPORT_TAGS = ( DEFAULT => [qw(&pgsql_check &pgsql_table_insert &pgsql_table_insert_from &pgsql_table_select &pgsql_table_drop &pgsql_table_create &pgsql_table_check &pgsql_table_delete &pgsql_tables_list &pgsql_table_update)]);
 
 use lib '.';
 use output qw { logmessage };
@@ -96,10 +96,16 @@ sub pgsql_check {
 
 sub pgsql_table_create {
     my $config       = $_[0];
-    my $table        = $_[1];
+    my $table_name   = $_[1];
     my $table_header = $_[2];
     my $loglevel     = $_[3];
+
     my $result       = undef;
+
+    my $schema       = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema   = $config->{"db"}->{"dbschema"};
+    }
 #    print Dumper $fields;
     my $fields = [];
     my $db = pgsql_connect($config, $loglevel);
@@ -113,7 +119,7 @@ sub pgsql_table_create {
             push (@{ $fields }, join(" ", @{ $header }));
         }
         print Dumper $fields;
-        my $query   = "CREATE TABLE IF NOT EXISTS $table (" . join(", ", @{ $fields }) . ");";
+        my $query   = "CREATE TABLE IF NOT EXISTS $schema.$table_name (" . join(", ", @{ $fields }) . ");";
         logmessage ("SQL request: $query\n", 10);
         my $request = $db->prepare($query);
         $request->execute();
@@ -130,13 +136,18 @@ sub pgsql_table_check {
     my $table_header = $_[2];
     my $loglevel     = $_[3];
 
+    my $schema       = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema   = $config->{"db"}->{"dbschema"};
+    }
+
     my $result       = undef;
     my $db = pgsql_connect($config, $loglevel);
     if (defined $db) {
-        logmessage ("Check \"$table_name\" structure:\n",$loglevel);
-        my $res = $db->tables(undef, 'public', $table_name);
+        logmessage ("Check \"$schema.$table_name\" structure:\n",$loglevel);
+        my $res = $db->tables(undef, $schema, $table_name);
         if ((defined $res) && ($res == 1)) {
-            my $sth = $db->column_info(undef, 'public', $table_name, undef);
+            my $sth = $db->column_info(undef, $schema, $table_name, undef);
             my $fields = $sth->fetchall_arrayref({});
 #            print Dumper $table_header;
 #            print Dumper $fields;
@@ -169,7 +180,7 @@ sub pgsql_table_check {
                 };
             }
         } else {
-            logmessage ("Table $table_name does not exists\n", $loglevel);
+            logmessage ("Table $schema.$table_name does not exists\n", $loglevel);
         }
     }
     $db->disconnect;
@@ -177,13 +188,29 @@ sub pgsql_table_check {
 }
 
 sub pgsql_table_select {
-    my $config   = $_[0];
-    my $sql      = $_[1];
-    my $loglevel = $_[2];
+    my $config     = $_[0];
+    my $field_list = $_[1];
+    my $table_name = $_[2];
+    my $condition  = $_[3];
+    my $loglevel   = $_[4];
+    my $tail       = $_[5];
 
     my $result   = undef;
+    my $schema       = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema   = $config->{"db"}->{"dbschema"};
+    }
+
     my $db = pgsql_connect($config, $loglevel);
 
+    my $sql = "SELECT $field_list FROM \"$schema\".\"$table_name\"";
+    if (defined $condition) {
+        $sql .= " WHERE $condition";
+    }
+    if (defined $tail) {
+        $sql .= "  $tail";
+    }
+    $sql .= ";";
     if (defined $db) {
         logmessage ("SQL request: $sql\n", $loglevel);
         my $query = $db->prepare($sql);
@@ -202,14 +229,19 @@ sub pgsql_table_select {
 }
 
 sub pgsql_table_drop {
-    my $config   = $_[0];
-    my $table    = $_[1];
-    my $loglevel = $_[2];
-    my $result   = undef;
+    my $config     = $_[0];
+    my $table_name = $_[1];
+    my $loglevel   = $_[2];
+    my $result     = undef;
+
+    my $schema       = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema   = $config->{"db"}->{"dbschema"};
+    }
 
     my $db = pgsql_connect($config, $loglevel);
     if (defined $db) {
-        my $query   = "DROP TABLE IF EXISTS $table;";
+        my $query   = "DROP TABLE IF EXISTS $schema.$table_name;";
         logmessage ("SQL request: $query\n", $loglevel);
         my $request = $db->prepare($query);
 #        $request->execute() or die $DBI::errstr;
@@ -224,17 +256,22 @@ sub pgsql_table_drop {
 }
 
 sub pgsql_table_delete {
-    my $config    = $_[0];
-    my $table     = $_[1];
-    my $condition = $_[2];
-    my $loglevel  = $_[3];
-    my $result    = undef;
+    my $config     = $_[0];
+    my $table_name = $_[1];
+    my $condition  = $_[2];
+    my $loglevel   = $_[3];
+    my $result     = undef;
+
+    my $schema     = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema = $config->{"db"}->{"dbschema"};
+    }
 
 #    print Dumper $condition;
 
     my $db = pgsql_connect($config, $loglevel);
     if (defined $db) {
-        my $query   = "DELETE FROM $table";
+        my $query   = "DELETE FROM $schema.$table_name";
         if (defined $condition) {
             $query .= " WHERE " . join(" AND ", @{ $condition });
         }
@@ -252,29 +289,42 @@ sub pgsql_table_delete {
 }
 
 sub pgsql_table_insert {
-    my $config   = $_[0];
-    my $table    = $_[1];
-    my $fields   = $_[2];
-    my $values   = $_[3];
-    my $loglevel = $_[4];
+    my $config     = $_[0];
+    my $table_name = $_[1];
+    my $fields     = $_[2];
+    my $values     = $_[3];
+    my $loglevel   = $_[4];
 
-    my $result   = undef;
+    my $result     = undef;
+
+    my $schema     = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema = $config->{"db"}->{"dbschema"};
+    }
+
     my $db = pgsql_connect($config, $loglevel);
 
-    if (defined $db && defined $table && defined $fields && defined $values) {
-        $fields = join("\", \"", @{ $fields });
-        $values = join("'),\n ('", @{ $values });
-        my $query = "INSERT INTO $table (\"$fields\") VALUES\n ('$values');";
-        logmessage ("$query\n", $loglevel);
-        my $request = $db->prepare($query);
-        $request->execute();
-        warn "Data fetching terminated early by error: $DBI::errstr\n" if $DBI::err;
-#        $request->execute() or die $DBI::errstr;
+    if (defined $db) {
+        if (defined $table_name && defined $fields && defined $values) {
+            $fields = join("\", \"", @{ $fields });
+            $values = join("'),\n ('", @{ $values });
+            my $query = "INSERT INTO $schema.$table_name (\"$fields\") VALUES\n ('$values');";
+            logmessage ("$query\n", $loglevel);
+            my $request = $db->prepare($query);
+            $request->execute();
+            warn "Data fetching terminated early by error: $DBI::errstr\n" if $DBI::err;
+#            $request->execute() or die $DBI::errstr;
 
-        $result=$request->{pgsql_insertid};
-        $request->finish();
-        $db->disconnect;
+            $result=$request->{pgsql_insertid};
+            $request->finish();
+            $db->disconnect;
+        } else {
+            logmessage("INSERT TABLE ERROR\n", $loglevel);
+        }
+    } else {
+        logmessage("INSERT TABLE ERROR - Can't connect to DB\n", $loglevel);
     }
+
     return $result;
 }
 
@@ -289,6 +339,11 @@ sub pgsql_table_insert_from {
     my $loglevel    = $_[7];
 
     my $result   = undef;
+    my $schema     = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema = $config->{"db"}->{"dbschema"};
+    }
+
     my $db = pgsql_connect($config, $loglevel);
 
 
@@ -298,7 +353,7 @@ sub pgsql_table_insert_from {
         $fields_dst = join("\", \"", @{ $fields_dst });
         $group_by = join("\", \"", @{ $group_by });
 
-        my $query = "INSERT INTO $table_dst (\"$fields_dst\") (SELECT \"$fields_src\" FROM $table_src";
+        my $query = "INSERT INTO $schema.$table_dst (\"$fields_dst\") (SELECT \"$fields_src\" FROM $schema.$table_src";
         if (defined $where) {
             $query .= " WHERE $where";
         }
@@ -320,6 +375,87 @@ sub pgsql_table_insert_from {
         $request->finish();
         $db->disconnect;
     }
+    return $result;
+}
+
+sub pgsql_tables_list {
+    my $config     = $_[0];
+    my $condition  = $_[1];
+    my $loglevel   = $_[2];
+
+    my $result   = undef;
+    my $schema       = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema   = $config->{"db"}->{"dbschema"};
+    }
+
+    my $db = pgsql_connect($config, $loglevel);
+
+    my $sql = "SELECT table_name FROM information_schema.tables WHERE table_schema = '$schema'";
+    if (defined $condition) {
+        $sql .= " AND table_name LIKE $condition";
+    }
+    $sql .= ";";
+    if (defined $db) {
+        logmessage ("SQL request: $sql\n", $loglevel);
+        my $query = $db->prepare($sql);
+        $query->execute() or die $DBI::errstr;
+        my $fields = join(',', @{ $query->{NAME_lc} });
+        my $values = undef;
+        while (my @row = $query->fetchrow_array) {
+            push @{ $values }, join (",", @row);
+        }
+        $result->{"fields"} = $fields;
+        $result->{"values"} = $values;
+        $query->finish();
+        $db->disconnect;
+    }
+    return $result;
+}
+
+sub pgsql_table_update {
+    my $config     = $_[0];
+    my $table_name = $_[1];
+    my $field      = $_[2];
+    my $value      = $_[3];
+    my $condition  = $_[4];
+    my $loglevel   = $_[5];
+
+    my $result     = undef;
+
+    my $schema     = "public";
+    if (defined $config->{"db"}->{"dbschema"}) {
+        $schema = $config->{"db"}->{"dbschema"};
+    }
+
+    my $db = pgsql_connect($config, $loglevel);
+
+    if (defined $db) {
+        if (defined $table_name && defined $field && defined $value) {
+#            $field = join("\", \"", @{ $fields });
+#            $values = join("'),\n ('", @{ $values });
+            my $query = "UPDATE $schema.$table_name SET $field=$value";
+            if (defined $condition) {
+                $query .= " WHERE ($condition)";
+            }
+            $query .= ";";
+
+            logmessage ("$query\n", $loglevel);
+            my $request = $db->prepare($query);
+            $request->execute();
+            warn "Data fetching terminated early by error: $DBI::errstr\n" if $DBI::err;
+#            $request->execute() or die $DBI::errstr;
+
+            $result=$request->{pgsql_insertid};
+            $request->finish();
+            $db->disconnect;
+        } else {
+            logmessage("UPDATE TABLE ERROR\n", $loglevel);
+        }
+    } else {
+        logmessage("UPDATE TABLE ERROR - Can't connect to DB\n", $loglevel);
+    }
+
     return $result;
 }
 

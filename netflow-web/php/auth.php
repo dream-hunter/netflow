@@ -1,7 +1,7 @@
 <?php
 include_once './config.php';
 
-$conn_str = "host=$database_hostname port=5432 dbname=$database_dbname user=$database_username password=$database_password";
+$conn_str = "host=$database_hostname port=5432 dbname=$database_name user=$database_username password=$database_password";
 $dbi = pg_connect($conn_str) OR DIE("Can't connect to database");
 $result = array();
 $user = array();
@@ -25,7 +25,7 @@ if (isset($_POST['login']) && isset($_POST['usr']) && isset($_POST['pass'])) {
     $_password = $_POST['pass'];
     $password = hash_hmac('sha512', $_password, $auth_pepper);
     $fieldlist = array("user_id","user_name","user_pass","user_group","user_enabled");
-    $tablename = "users";
+    $tablename = "\"$dashboard_schema\".\"users\"";
     $query = "SELECT " . implode(",", $fieldlist) . " FROM $tablename WHERE user_name='". $_username ."' ORDER BY user_id;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     $row = pg_fetch_array($res);
@@ -56,8 +56,8 @@ if (isset($_COOKIE['login']) && isset($_COOKIE['token'])) {
     $password = $_COOKIE['token'];
     $fieldlist = array("users.user_id", "users.user_name", "users.user_pass", "users.user_group", "users.user_name_full", "users.user_email", "users.user_enabled",
                        "groups.group_name", "groups.group_enabled", "groups.group_reader", "groups.group_writer", "groups.group_admin");
-    $tablename = "users";
-    $query = "SELECT " . implode(",", $fieldlist) . " FROM $tablename JOIN groups ON groups.group_id = users.user_group WHERE users.user_name='". $_username ."' ORDER BY users.user_id;";
+    $tablename = "\"$dashboard_schema\".\"users\"";
+    $query = "SELECT " . implode(",", $fieldlist) . " FROM $tablename JOIN \"$dashboard_schema\".\"groups\" ON groups.group_id = users.user_group WHERE users.user_name='". $_username ."' ORDER BY users.user_id;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     $row = pg_fetch_array($res);
     if ($row && $row['user_enabled'] == "t" && (password_verify($row['user_pass'],$password) || password_verify(hash_hmac('sha512', $row['user_pass'], $auth_pepper), $password))) {

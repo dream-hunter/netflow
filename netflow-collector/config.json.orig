@@ -4,6 +4,7 @@
             "dbengine" : "Pg",
             "dbhost"   : "127.0.0.1",
             "dbname"   : "netflow",
+            "dbschema" : "collector",
             "dbuser"   : "netflow",
             "dbpass"   : "netflow"
         },
@@ -19,6 +20,7 @@
                 "dbengine" : "Pg",
                 "dbhost"   : "127.0.0.1",
                 "dbname"   : "netflow",
+                "dbschema" : "collector",
                 "dbuser"   : "netflow",
                 "dbpass"   : "netflow"
             }
@@ -28,6 +30,7 @@
                 "dbengine" : "Pg",
                 "dbhost"   : "127.0.0.1",
                 "dbname"   : "netflow",
+                "dbschema" : "analyzer",
                 "dbuser"   : "netflow",
                 "dbpass"   : "netflow"
             }

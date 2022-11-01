@@ -23,7 +23,7 @@ use Daemon::Daemonize qw( daemonize write_pidfile );
 use output          qw { logmessage };
 use getconfig       qw { getconfig setconfig appendconfig };
 use service_handler qw { dec2ip ip2dec table_serialise data_serialise };
-use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete};
+use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete pgsql_tables_list };
 
 logmessage ("Begin programm...\n",10);
 my $loglevel    = 7;
@@ -95,11 +95,13 @@ sub main_proc {
         }
         $peer_address = unpack("N", $socket->peeraddr());
         if (!defined $devices->{$peer_address}) {
-            my $result = pgsql_table_select($config,"SELECT * FROM devices WHERE device_header='$peer_address';", $loglevel);
+            my $result = pgsql_table_select($config, "*", "devices", "device_header='$peer_address'", $loglevel);
             my $device = table_serialise($result, "device_header", $loglevel);
             if (defined $device->{$peer_address}) {
+                logmessage("Device $peer_address found\n", $loglevel);
                 $devices->{$peer_address} = dclone $device->{$peer_address};
             } else {
+                logmessage("Device $peer_address not found\n", $loglevel);
                 my $fields = ["device_header","device_description","device_data","device_enabled"];
                 my $values = ["$peer_address','','','false"];
                 my $result = pgsql_table_insert($config,"devices", $fields, $values, $loglevel);
@@ -119,14 +121,15 @@ sub main_proc {
             $time = time();
             if (defined $v9thread->{"service"}) {
                 if ($v9thread->{"service"}->is_joinable || !$v9thread->{"service"}->is_running) {
+                    logmessage("Service thread exists. Need restart...\n", $loglevel);
                     my $data = $v9thread->{"service"}->join;
-                    $devices = $data->{"devices"};
-                    $templates = $data->{"templates"};
+                    $devices   = dclone $data->{"devices"};
+                    $templates = dclone $data->{"templates"};
                     undef $v9thread->{"service"};
                     $v9thread->{"service"}=threads->new(\&thread_service,$config,$loglevel);
                 }
             } else {
-                logmessage("Service thread does not exists. Starting up and sending data...\n", $loglevel-3);
+                logmessage("Service thread not exists. Starting up and sending data...\n", $loglevel);
                 $v9thread->{"service"}=threads->new(\&thread_service,$config,$loglevel);
             }
         }
@@ -209,7 +212,7 @@ sub getdevices {
     my $config   = $_[0];
     my $loglevel = $_[1];
 
-    my $result = pgsql_table_select($config,"SELECT * FROM devices;", $loglevel+10);
+    my $result = pgsql_table_select($config,"*", "devices", undef, $loglevel+10);
     my $devices = table_serialise($result, "device_header", $loglevel);
 #    print Dumper $devices;
 
@@ -221,7 +224,7 @@ sub gettemplates {
     my $devices  = $_[1];
     my $loglevel = $_[2];
 
-    my $result = pgsql_table_select($config,"SELECT * FROM v9templates;", $loglevel+10);
+    my $result = pgsql_table_select($config,"*", "v9templates", undef, $loglevel+10);
     foreach my $val (values @{ $result->{"values"} }) {
         my @str = split(",", $val);
         my $device_id = $str[0];
@@ -245,13 +248,14 @@ sub thread_service {
     my $result    = undef;
     my $data      = undef;
 
-    my $devices   = getdevices($config, $loglevel);
-    my $templates = gettemplates($config, $devices, $loglevel);
+    $data->{"devices"}   = getdevices($config, $loglevel);
+    $data->{"templates"} = gettemplates($config, $devices, $loglevel);
 
     logmessage ("Service thread started...\n", $loglevel);
 
-    $result = pgsql_table_select($config,"SELECT tablename FROM pg_catalog.pg_tables WHERE tablename LIKE 'bin_%';", $loglevel-5);
-
+#    $result = pgsql_table_select($config,"table_name", "information_schema.tables", "table_schema = 'public' AND table_name LIKE 'bin_%'", $loglevel-5);
+    $result = pgsql_tables_list($config, "'bin_%'", $loglevel-5);
+#    print Dumper $result;
     foreach my $tablename (values @{ $result->{values} }) {
         my $condition = undef;
         if (defined $config->{"options"}->{"bincleanup"}) {
@@ -421,7 +425,7 @@ sub v9thread {
                                 my $result = pgsql_table_insert($config,"v9templates", $fields, $values, $loglevel);
                         } else {
                             my $result;
-                                $result = pgsql_table_select($config,"SELECT * FROM v9templates WHERE device_id='$peer_address' AND template_id='$template_id';", $loglevel);
+                                $result = pgsql_table_select($config,"*", "v9templates", "device_id='$peer_address' AND template_id='$template_id'", $loglevel);
                             my $template = table_serialise($result, "template_id", $loglevel);
                             if (($template->{$template_id}->{template_length} eq $templates->{$template_id}->{template_length}) &&
                                 ($template->{$template_id}->{template_format} eq $templates->{$template_id}->{template_format}) &&

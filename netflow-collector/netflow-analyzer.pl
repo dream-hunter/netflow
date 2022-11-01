@@ -10,28 +10,20 @@ use Data::Dumper;
 use JSON::PP::Boolean;
 use Storable qw(dclone);
 
-#use threads;
-#use Thread;
-#use Thread::Queue;
-
 use Daemon::Daemonize qw( daemonize write_pidfile );
 
 use output          qw { logmessage };
 use getconfig       qw { getconfig setconfig appendconfig };
 use service_handler qw { dec2ip ip2dec table_serialise data_serialise };
-use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete};
+use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete pgsql_table_update };
 
 logmessage ("Begin programm...\n",10);
 my $loglevel    = 5;
 my $configfile  = 'config.json';
 
-my $analyzethread = undef;
-my $devices = undef;
-my $templates = undef;
-
 my $globalconfig  = getconfig("config.json",$loglevel-4);
 my $config        = dclone $globalconfig->{"analyzer"};
-print Dumper $config;
+#print Dumper $config;
 
 my $sighup = 0;
 
@@ -67,10 +59,99 @@ if (defined $ARGV[0] && $ARGV[0] eq "-daemonize") {
 sub main_proc {
     while(!$sighup) {
         binanalyze($config,$loglevel);
+        datasync($config,$loglevel);
+
+        logmessage("Sleep before start again\n", $loglevel);
+        sleep 10;
     }
     return "END";
 }
 
+sub datasync {
+    my $config   = $_[0];
+    my $loglevel = $_[1];
+
+    foreach my $dst (keys %{ $config->{"dstdb"}} ) {
+        my $dstconf->{"options"} = dclone $config->{"options"};
+        $dstconf->{"db"} = dclone $config->{"dstdb"}->{$dst};
+        foreach my $src (keys %{ $config->{"srcdb"}} ) {
+            my $srcconf->{"options"} = dclone $config->{"options"};
+            $srcconf->{"db"} = dclone $config->{"srcdb"}->{$src};
+
+            my $src_devices   = getdevices($srcconf, $loglevel);
+            my $src_templates = gettemplates($srcconf, $src_devices, $loglevel);
+
+            my $dst_devices   = getdevices($dstconf, $loglevel);
+            my $dst_templates = gettemplates($dstconf, $dst_devices, $loglevel);
+
+            my $devices_fields        = ["device_header","device_enabled"];
+            my $templates_fields      = ["device_id", "template_id", "template_length", "template_header", "template_format", "template_sampling", "template_enabled"];
+            my $src_devices_values    = undef;
+            my $src_devices_enable    = undef;
+            my $src_devices_disable   = undef;
+            my $src_templates_values  = undef;
+            my $src_templates_enable  = undef;
+            my $src_templates_disable = undef;
+            foreach my $src_device (keys %{ $src_devices }) {
+                if (!defined $dst_devices->{$src_device}) {
+                    logmessage ("Device ".$src_device."(".dec2ip($src_device).") not found in destination DB. Creating...\n", $loglevel);
+                    push (@{ $src_devices_values }, $src_device."','".$src_devices->{$src_device}->{"device_enabled"});
+                } elsif ($dst_devices->{$src_device}->{"device_enabled"} ne $src_devices->{$src_device}->{"device_enabled"}) {
+                    if ($dst_devices->{$src_device}->{"device_enabled"} eq "1") {
+                        logmessage ("Need to enable device ".$src_device."(".dec2ip($src_device).")...\n", $loglevel);
+                        push (@{ $src_devices_enable }, $src_device);
+                    } else {
+                        logmessage ("Need to disable device ".$src_device."(".dec2ip($src_device).")...\n", $loglevel);
+                        push (@{ $src_devices_disable }, $src_device);
+                    }
+                }
+                if (defined $src_templates->{$src_device}->{"templates"}) {
+                    foreach my $src_template (keys %{ $src_templates->{$src_device}->{"templates"} }) {
+                        if (!defined $dst_templates->{$src_device}->{"templates"} || !defined $dst_templates->{$src_device}->{"templates"}->{$src_template}) {
+                            logmessage ("Template ".$src_device."_".$src_template." not found in destination DB. Creating...\n", $loglevel);
+                            push (@{ $src_templates_values }, $src_templates->{$src_device}->{"templates"}->{$src_template}->{"device_id"}."','".
+                                                              $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_id"}."','".
+                                                              $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_length"}."','".
+                                                              $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_header"}."','".
+                                                              $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_format"}."','".
+                                                              $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_sampling"}."','".
+                                                              $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_enabled"});
+                        } elsif ($dst_templates->{$src_device}->{"templates"}->{$src_template}->{"template_enabled"} ne $src_templates->{$src_device}->{"templates"}->{$src_template}->{"template_enabled"}) {
+                            if ($dst_templates->{$src_device}->{"templates"}->{$src_template}->{"template_enabled"} eq "1") {
+                                logmessage ("Need to enable template ".$src_device."_".$src_template."\n", $loglevel);
+                                push (@{ $src_templates_enable }, $src_device . " AND template_id=" . $src_template);
+                            } else {
+                                logmessage ("Need to disable template ".$src_device."_".$src_template."\n", $loglevel);
+                                push (@{ $src_templates_disable }, $src_device . " AND template_id=" . $src_template);
+                            }
+                        }
+                    }
+                }
+            }
+            if (defined $src_devices_values && scalar $src_devices_values > 0) {
+                pgsql_table_insert($dstconf,"devices", $devices_fields, $src_devices_values, $loglevel);
+            }
+            if (defined $src_devices_enable && scalar $src_devices_enable > 0) {
+                pgsql_table_update($srcconf,"devices", "device_enabled", "true", "device_header='" . join("' OR device_header='" , @{ $src_devices_enable }) . "'", $loglevel);
+            }
+            if (defined $src_devices_disable && scalar $src_devices_disable > 0) {
+                pgsql_table_update($srcconf,"devices", "device_enabled", "false", "device_header='" . join("' OR device_header='" , @{ $src_devices_disable }) . "'", $loglevel);
+            }
+
+            if (defined $src_templates_values && scalar $src_templates_values > 0) {
+                pgsql_table_insert($dstconf,"v9templates", $templates_fields, $src_templates_values, $loglevel);
+            }
+            if (defined $src_templates_enable && scalar $src_templates_enable > 0) {
+                pgsql_table_update($srcconf,"v9templates", "template_enabled", "true", "(device_id=" . join(") OR (device_id=" , @{ $src_templates_enable }) . ")", $loglevel);
+            }
+            if (defined $src_templates_disable && scalar $src_templates_disable > 0) {
+                pgsql_table_update($srcconf,"v9templates", "template_enabled", "false", "(device_id=" . join(") OR (device_id=" , @{ $src_templates_disable }) . ")", $loglevel);
+            }
+        }
+    }
+
+    return 1;
+}
 
 sub binanalyze {
     my $config   = $_[0];
@@ -110,18 +191,15 @@ sub binanalyze {
             my $srcconf->{"options"} = dclone $config->{"options"};
             $srcconf->{"db"} = dclone $config->{"srcdb"}->{$src};
 
-            $devices   = getdevices($dstconf, $loglevel);
-            $templates = gettemplates($dstconf, $devices, $loglevel);
+            $devices   = getdevices($srcconf, $loglevel);
+            $templates = gettemplates($srcconf, $devices, $loglevel);
 
-            print Dumper $devices;
-            print Dumper $templates;
 
-            my $result = pgsql_table_select($dstconf,"SELECT * FROM \"ipfix\";", $loglevel);
+            my $result = pgsql_table_select($dstconf,"*", "ipfix", undef, $loglevel);
             $ipfix  = table_serialise($result, "id", $loglevel);
 
             my $time   = int(time()/$dstconf->{'options'}->{'data-interval'})*$dstconf->{'options'}->{'data-interval'} - $dstconf->{'options'}->{'data-interval'};
 
-#            foreach my $device (values %{ $devices }) {
             foreach my $device (values %{ $templates }) {
                 if ($device->{'device_enabled'} == 1 && defined $device->{'templates'}) {
                     v9binanalyze($srcconf,$dstconf,$device,$time,$ipfix,$conv,$export_count,$loglevel);
@@ -131,9 +209,6 @@ sub binanalyze {
             }
         }
     }
-    logmessage("Sleep before start again\n", 10);
-    sleep 10;
-
     return 1;
 }
 
@@ -141,9 +216,8 @@ sub getdevices {
     my $config   = $_[0];
     my $loglevel = $_[1];
 
-    my $result = pgsql_table_select($config,"SELECT * FROM devices;", $loglevel+10);
+    my $result = pgsql_table_select($config,"*", "devices", undef, $loglevel);
     my $devices = table_serialise($result, "device_header", $loglevel);
-#    print Dumper $devices;
 
     return $devices;
 }
@@ -153,8 +227,8 @@ sub gettemplates {
     my $devices  = $_[1];
     my $loglevel = $_[2];
 
-    my $templates = dclone $devices;
-    my $result = pgsql_table_select($config,"SELECT * FROM v9templates;", $loglevel+10);
+    my $templates = $devices;
+    my $result = pgsql_table_select($config,"*", "v9templates", undef, $loglevel);
     foreach my $val (values @{ $result->{"values"} }) {
         my @str = split(",", $val);
         my $device_id = $str[0];
@@ -167,7 +241,6 @@ sub gettemplates {
             $templates->{$device_id}->{'templates'}->{$template_id} = dclone $template->{$template_id};
         }
     }
-#    print Dumper $templates;
 
     return $templates
 }
@@ -216,7 +289,7 @@ sub v9binanalyze {
                         "octetDeltaCount"  => "sum(\"octetDeltaCount\")",
                         "packetDeltaCount" => "sum(\"packetDeltaCount\")",
                     };
-                    $result = pgsql_table_select($srcconfig,"SELECT * FROM \"$table_bin\" WHERE unixseconds>". ($time-$dstconfig->{'options'}->{'bincleanup'}) ." ORDER BY id LIMIT 1;", $loglevel-2);
+                    $result = pgsql_table_select($srcconfig,"*", $table_bin, "unixseconds>". ($time-$dstconfig->{'options'}->{'bincleanup'}), $loglevel-2, "ORDER BY id LIMIT 1");
                     my @fields = split(",", $result->{'fields'});
                     foreach my $key (keys @fields) {
                         next if ($fields[$key] eq 'id' || $fields[$key] eq 'sysuptime' || $fields[$key] eq 'unixseconds' || $fields[$key] eq '22' || $fields[$key] eq '21' || $fields[$key] eq '1' || $fields[$key] eq '2');
@@ -259,7 +332,7 @@ sub v9binanalyze {
                     while (defined $lastid) {
                         $lastid = undef;
                         $data->{'values'} = undef;
-                        $result = pgsql_table_select($srcconfig,"SELECT * FROM \"$table_bin\" WHERE unixseconds>". ($time-$dstconfig->{'options'}->{'bincleanup'}) ." ORDER BY id LIMIT $export_count;", $loglevel-2);
+                        $result = pgsql_table_select($srcconfig,"*", $table_bin, "unixseconds>".($time-$dstconfig->{'options'}->{'bincleanup'}), $loglevel-2, "ORDER BY id LIMIT $export_count");
                         my @fields = split(",", $result->{'fields'});
                         foreach my $record (values @{ $result->{'values'} }) {
                             my @cells = split(",",$record);
@@ -459,7 +532,7 @@ sub v5binanalyze() {
     while (defined $lastid) {
         $lastid = undef;
         $data->{'values'} = undef;
-        $result = pgsql_table_select($srcconfig,"SELECT * FROM \"$table_bin\" WHERE unixseconds>". ($time-$dstconfig->{'options'}->{'bincleanup'}) ." ORDER BY id LIMIT $export_count;", $loglevel);
+        $result = pgsql_table_select($srcconfig,"*", $table_bin, "unixseconds>".($time-$dstconfig->{'options'}->{'bincleanup'}), $loglevel, " ORDER BY id LIMIT $export_count");
         my @fields = split(",", $result->{'fields'});
         foreach my $record (values @{ $result->{'values'} }) {
             my @values;
