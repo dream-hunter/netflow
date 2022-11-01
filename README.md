@@ -304,6 +304,11 @@ If you gather netflow v9 information, you have to enable v9templates as well. Se
 
 # CHANGELOG:
 
+ **0.1.2alpha**
+
+- 01.11.2022 - Added nodes feature that allows to implement distributed collectors network.
+- 01.11.2022 - Changed database structure (using PostgreSQL schemas).
+
  **0.1.1alpha**
 
 - 01.08.2022 - Project published on GitHub
