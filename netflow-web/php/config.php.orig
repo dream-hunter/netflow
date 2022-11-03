@@ -10,4 +10,6 @@ $defaultro = '';
 $defaultrw = '';
 $defaultsnmpver = '2c';
 $auth_pepper="h89svFdWMDdmjOlvxpecFa";
+
+date_default_timezone_set("Asia/Krasnoyarsk");
 ?>

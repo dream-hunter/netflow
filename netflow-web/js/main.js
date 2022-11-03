@@ -963,6 +963,60 @@ function disableSelectedV9Templates() {
 
 }
 
+function editSelectedTemplates() {
+    document.getElementById("process-screen").className = "process_splash";
+    var v9template_id = new Array();
+    for (var i=0;i<v9templates.length;i++) {
+        if (document.getElementById("v9templates-check-"+v9templates[i].device_id+"_"+v9templates[i].template_id).checked === true) {
+            v9template_id.push(v9templates[i].device_id+"_"+v9templates[i].template_id);
+        }
+    }
+    var query = "./php/itemedit.php?v9template_id=" + v9template_id.join(',');
+    if (document.getElementById("dialogue-input-sampling").value !== "") {
+        query += "&v9template_sampling=" + document.getElementById("dialogue-input-sampling").value;
+    }
+    console.log(query);
+
+    getJSON(query,  function(err, data) {
+        if (err != null) {
+            console.error(err);
+        } else {
+            SwitchTab("content-v9templates-tab");
+        }
+    });
+}
+
+function editSelectedTemplatesWindow() {
+    checked_id = false;
+    for (var i=0;i<v9templates.length;i++) {
+        if (document.getElementById("v9templates-check-"+v9templates[i].device_id+"_"+v9templates[i].template_id).checked === true) {
+            checked_id = true;
+            break
+        }
+    }
+    if (checked_id) {
+        document.getElementById("dialogue-stage").className = "dialogue_stage";
+        DelElement("dialogue-body");
+        AddElement("div","dialogue-window","dialogue-body","dialogue_body");
+        AddElement("div","dialogue-body","dialogue-label","dialogue_label","Edit v9 template sampling rate");
+        AddElement("form","dialogue-body","dialogue-form","dialogue_form");
+
+        AddElement("div","dialogue-form","dialogue-sampling-row","dialogue_row");
+        AddElement("div","dialogue-sampling-row",null,"dialogue_row_label","Sampling rate");
+        var attributes = [ {"name": "type", "value": "text"} ];
+        AddElement("input","dialogue-sampling-row","dialogue-input-sampling","dialogue_row_input");
+
+        AddElement("div","dialogue-body","dialogue-bottom-line","dialogue_bottom_line");
+        AddElement("div","dialogue-bottom-line",null,"dialogue_vertical_spacer");
+        var attributes = [ {"name": "onclick", "value": "hideElement('dialogue-stage');editSelectedTemplates();"} ];
+        AddElement("div","dialogue-bottom-line",null,"dialogue_button","Ok",attributes);
+        AddElement("div","dialogue-bottom-line",null,"dialogue_vertical_spacer");
+        var attributes = [ {"name": "onclick", "value": "hideElement('dialogue-stage');"} ];
+        AddElement("div","dialogue-bottom-line",null,"dialogue_button","Cancel",attributes);
+        AddElement("div","dialogue-bottom-line",null,"dialogue_vertical_spacer");
+    }
+}
+
 function clearRawDataTab() {
     DelElement("tab-raw-data-table");
 
@@ -991,9 +1045,17 @@ function showRawData() {
     DelElement("raw-data-body");
     AddElement("div","tab-raw-data-table","raw-data-body","class_table");
 
-    var data_table = document.getElementById("raw-data-device-select").value;
-    if (document.getElementById("raw-data-v9templates-select").value !== 'null') {
-        data_table += "_"+document.getElementById("raw-data-v9templates-select").value;
+    var device_id = document.getElementById("raw-data-device-select").value;
+    var template_id = document.getElementById("raw-data-v9templates-select").value;
+    var sampling = 1;
+    var data_table = device_id;
+    if (template_id !== 'null') {
+        data_table += "_" + template_id;
+        for (var i=0;i<v9templates.length;i++) {
+            if(v9templates[i].device_id == device_id && v9templates[i].template_id == template_id) {
+                sampling = v9templates[i].template_sampling;
+            }
+        }
     }
     var query_limit = document.getElementById("raw-data-limit-select").value;
     var time_interval = 300;
@@ -1001,21 +1063,23 @@ function showRawData() {
     var time_start = Math.floor(Date.now() / 1000 / 300 ) * 300 - time_interval;
     var time_end = Math.floor(Date.now() / 1000);
 
-
-    var query = "./php/raw_data.php?ipv4&tbl="+ data_table +"&start=" + time_start + "&end=" + time_end + "&interval=" + time_interval + "&limit=" + query_limit;
+    var query = "";
+    if (document.getElementById("raw-data-group-form").elements.raw_data_group_by.value == 'none') {
+        query = "./php/raw_data.php?ipv4sessions&tbl="+ data_table +"&start=" + time_start + "&end=" + time_end + "&limit=" + query_limit + "&sampling=" + sampling;
+    }
+    if (document.getElementById("raw-data-group-form").elements.raw_data_group_by.value == 'src') {
+        query = "./php/raw_data.php?ipv4sources&tbl="+ data_table +"&start=" + time_start + "&end=" + time_end + "&limit=" + query_limit + "&sampling=" + sampling;
+    }
+    if (document.getElementById("raw-data-group-form").elements.raw_data_group_by.value == 'dst') {
+        query = "./php/raw_data.php?ipv4destinations&tbl="+ data_table +"&start=" + time_start + "&end=" + time_end + "&limit=" + query_limit + "&sampling=" + sampling;
+    }
     if (document.getElementById("raw-data-ingress-interface-select").value != 'null') {
         query += "&iif=" + document.getElementById("raw-data-ingress-interface-select").value;
     }
     if (document.getElementById("raw-data-egress-interface-select").value != 'null') {
         query += "&eif=" + document.getElementById("raw-data-egress-interface-select").value;
     }
-    console.log(document.getElementById("raw-data-group-form").elements.raw_data_group_by.value);
-    if (document.getElementById("raw-data-group-form").elements.raw_data_group_by.value == 'src') {
-        query += "&groupbysrcip";
-    }
-    if (document.getElementById("raw-data-group-form").elements.raw_data_group_by.value == 'dst') {
-        query += "&groupbydstip";
-    }
+//    console.log(document.getElementById("raw-data-group-form").elements.raw_data_group_by.value);
     if (document.getElementById("raw-data-sourceip-text").value != '') {
         query += "&srcip="+document.getElementById("raw-data-sourceip-text").value+"/"+document.getElementById("raw-data-sourceip-mask").value;
     }
@@ -1028,8 +1092,8 @@ function showRawData() {
         if (err != null) {
             console.error(err);
         } else {
-            if (data != null && data.detail != null) {
-                showRawDataDetail(data);
+            if (data != null && data.data != null) {
+                showRawDataDetail(data.data);
             }
             if (data != null && data.group != null) {
                 showRawDataGroup(data);
@@ -1046,93 +1110,71 @@ function showRawDataGroup(data) {
 }
 
 function showRawDataDetail(data) {
-    var sampling = 0;
-    for (var i=0;i<v9templates.length;i++) {
-        if(v9templates[i].device_id == document.getElementById("raw-data-device-select").value && v9templates[i].template_id == document.getElementById("raw-data-v9templates-select").value) {
-            sampling = v9templates[i].template_sampling;
-//            console.log(v9templates[i]);
-        }
-    }
-    if (data.detail[0] != null && data.detail[0].length > 0) {
-        var pielabels = new Array();
-        var pievalues = new Array();
-
+//    var sampling = 1;
+//    for (var i=0;i<v9templates.length;i++) {
+//        if(v9templates[i].device_id == document.getElementById("raw-data-device-select").value && v9templates[i].template_id == document.getElementById("raw-data-v9templates-select").value) {
+//            sampling = v9templates[i].template_sampling;
+//        }
+//    }
+    if (data.totalhosts != null && data.totalhosts.length > 0) {
         AddElement("div","raw-data-body","table-raw-data-chart","class_table_row");
         AddElement("div","raw-data-body","table-raw-data-label","class_header",intToIP(document.getElementById("raw-data-device-select").value) + " - Detailed");
         AddElement("div","raw-data-body","table-raw-data-header","class_table_row");
         AddElement("div","table-raw-data-header",null,"class_table_cell_5");
         AddElement("div","table-raw-data-header",null,"class_table_cell_15","Src IP");
         AddElement("div","table-raw-data-header",null,"class_table_cell_15","Dst IP");
-        AddElement("div","table-raw-data-header",null,"class_table_cell_5","IIF");
-        AddElement("div","table-raw-data-header",null,"class_table_cell_5","OIF");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Src port");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Dst port");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Proto");
-        AddElement("div","table-raw-data-header",null,"class_table_cell_5","COS");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Bytes");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Packets");
 
-        for (var i=1;i<data.detail[0].length;i++) {
-            var row = data.detail[0][i];
+        for (var i=0;i<data.totalhosts.length;i++) {
+            var row = data.totalhosts[i];
             var attributes = [ {"name": "style", "value": "font-size:small;border-bottom: 1px solid grey;"} ];
             AddElement("div","raw-data-body","table-raw-data-row-"+i,"class_table_row",null,attributes);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[1]);
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5",row[2]);
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5",row[3]);
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[2]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[4]]+"("+row[4]+")");
+//            if (sampling > 0) {
+//                row[5] *= sampling;
+//                row[6] *= sampling;
+//            }
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[5]);
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[6]]+"("+row[6]+")");
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5",row[7]);
-            if (sampling > 0) {
-                row[8] *= sampling;
-                row[9] *= sampling;
-            }
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[8]);
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[9]);
-            pielabels[i] = row[0] +"(" + row[4] + ") - " + row[1] + "(" + row[5] + ")";
-            pievalues[i] = row[8];
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[6]);
         }
-        var row = data.detail[0][0];
+        var row = data.total[0];
         var attributes = [ {"name": "style", "value": "font-size:small;border-bottom: 1px solid grey;"} ];
         AddElement("div","raw-data-body","table-raw-data-row-"+i,"class_table_row",null,attributes);
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_30");
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_40","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_20");
-        if (sampling > 0) {
-            row[8] *= sampling;
-            row[9] *= sampling;
-        }
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[8]);
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[9]);
+//        if (sampling > 0) {
+//            row[0] *= sampling;
+//            row[1] *= sampling;
+//        }
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
-        var pie_chart = {
-            'data': [{
-                'labels': pielabels,
-                'values': pievalues,
-                'type': 'pie',
-//                'sort': true,
-//                'automargin': true
-            }],
-            'layout': {
-                'paper_bgcolor': "rgba(0,0,0,0)",
-                'autosize' : true
-//                height: 500
-            }
-        }
-//        console.log(pie_chart);
+        var plotDiv = document.getElementById('plot');
+        var traces = new Array();
+        traces = data.traces;
+        var layout = {
+            'title': 'Detailed chart for ' + intToIP(document.getElementById("raw-data-device-select").value),
+            'paper_bgcolor': "rgba(0,0,0,0)",
+            'plot_bgcolor' : 'rgba(0,0,0,0)'
+        };
 
-        Plotly.newPlot('table-raw-data-chart', pie_chart.data, pie_chart.layout);
+        Plotly.newPlot('table-raw-data-chart', traces, layout);
+
     }
 
-    if (data.detail[1] != null && data.detail[1].length > 0) {
-        var pielabels = new Array();
-        var pievalues = new Array();
-
+    if (data.totalsources != null && data.totalsources.length > 0) {
         AddElement("div","raw-data-body","table-raw-data-chart","class_table_row");
-        AddElement("div","raw-data-body","table-raw-data-label","class_header",intToIP(document.getElementById("raw-data-device-select").value) + " - Group by source IP");
+        AddElement("div","raw-data-body","table-raw-data-label","class_header",intToIP(document.getElementById("raw-data-device-select").value) + " - Detailed");
         AddElement("div","raw-data-body","table-raw-data-header","class_table_row");
         AddElement("div","table-raw-data-header",null,"class_table_cell_5");
         AddElement("div","table-raw-data-header",null,"class_table_cell_15","Src IP");
@@ -1140,60 +1182,51 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Proto");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Bytes");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Packets");
-        for (var i=1;i<data.detail[1].length;i++) {
-            var row = data.detail[1][i];
+
+        for (var i=0;i<data.totalsources.length;i++) {
+            var row = data.totalsources[i];
             var attributes = [ {"name": "style", "value": "font-size:small;border-bottom: 1px solid grey;"} ];
             AddElement("div","raw-data-body","table-raw-data-row-"+i,"class_table_row",null,attributes);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[2]]+"("+row[2]+")");
-            if (sampling > 0) {
-                row[3] *= sampling;
-                row[4] *= sampling;
-            }
+//            if (sampling > 0) {
+//                row[3] *= sampling;
+//                row[4] *= sampling;
+//            }
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
-            pielabels[i] = row[0] +"(" + row[1] + ")";
-            pievalues[i] = row[3];
         }
-        var row = data.detail[1][0];
+        var row = data.total[0];
         var attributes = [ {"name": "style", "value": "font-size:small;border-bottom: 1px solid grey;"} ];
         AddElement("div","raw-data-body","table-raw-data-row-"+i,"class_table_row",null,attributes);
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10");
-        if (sampling > 0) {
-            row[3] *= sampling;
-            row[4] *= sampling;
-        }
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
-        var pie_chart = {
-            'data': [{
-                'labels': pielabels,
-                'values': pievalues,
-                'type': 'pie',
-//                'sort': true,
-//                'automargin': true
-            }],
-            'layout': {
-                'paper_bgcolor': "rgba(0,0,0,0)",
-                'autosize' : true
-//                height: 500
-            }
-        }
-//        console.log(pie_chart);
+//        if (sampling > 0) {
+//            row[0] *= sampling;
+//            row[1] *= sampling;
+//        }
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
-        Plotly.newPlot('table-raw-data-chart', pie_chart.data, pie_chart.layout);
+        var plotDiv = document.getElementById('plot');
+        var traces = new Array();
+        traces = data.traces;
+        var layout = {
+            'title': 'Detailed chart for ' + intToIP(document.getElementById("raw-data-device-select").value),
+            'paper_bgcolor': "rgba(0,0,0,0)",
+            'plot_bgcolor' : 'rgba(0,0,0,0)'
+        };
+
+        Plotly.newPlot('table-raw-data-chart', traces, layout);
+
     }
 
-    if (data.detail[2] != null && data.detail[2].length > 0) {
-        var pielabels = new Array();
-        var pievalues = new Array();
-
+    if (data.totaldestinations != null && data.totaldestinations.length > 0) {
         AddElement("div","raw-data-body","table-raw-data-chart","class_table_row");
-        AddElement("div","raw-data-body","table-raw-data-label","class_header",intToIP(document.getElementById("raw-data-device-select").value) + " - Group by destination IP");
+        AddElement("div","raw-data-body","table-raw-data-label","class_header",intToIP(document.getElementById("raw-data-device-select").value) + " - Detailed");
         AddElement("div","raw-data-body","table-raw-data-header","class_table_row");
         AddElement("div","table-raw-data-header",null,"class_table_cell_5");
         AddElement("div","table-raw-data-header",null,"class_table_cell_15","Dst IP");
@@ -1201,52 +1234,45 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Proto");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Bytes");
         AddElement("div","table-raw-data-header",null,"class_table_cell_10","Packets");
-        for (var i=1;i<data.detail[2].length;i++) {
-            var row = data.detail[2][i];
+
+        for (var i=0;i<data.totaldestinations.length;i++) {
+            var row = data.totaldestinations[i];
             var attributes = [ {"name": "style", "value": "font-size:small;border-bottom: 1px solid grey;"} ];
             AddElement("div","raw-data-body","table-raw-data-row-"+i,"class_table_row",null,attributes);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[2]]+"("+row[2]+")");
-            if (sampling > 0) {
-                row[3] *= sampling;
-                row[4] *= sampling;
-            }
+//            if (sampling > 0) {
+//                row[3] *= sampling;
+//                row[4] *= sampling;
+//            }
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
-            pielabels[i] = row[0] +"(" + row[1] + ")";
-            pievalues[i] = row[3];
         }
-        var row = data.detail[2][0];
+        var row = data.total[0];
         var attributes = [ {"name": "style", "value": "font-size:small;border-bottom: 1px solid grey;"} ];
         AddElement("div","raw-data-body","table-raw-data-row-"+i,"class_table_row",null,attributes);
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10");
-        if (sampling > 0) {
-            row[3] *= sampling;
-            row[4] *= sampling;
-        }
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
-        var pie_chart = {
-            'data': [{
-                'labels': pielabels,
-                'values': pievalues,
-                'type': 'pie',
-//                'sort': true,
-//                'automargin': true
-            }],
-            'layout': {
-                'paper_bgcolor': "rgba(0,0,0,0)",
-                'autosize' : true
-//                height: 500
-            }
-        }
-//        console.log(pie_chart);
+//        if (sampling > 0) {
+//            row[0] *= sampling;
+//            row[1] *= sampling;
+//        }
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
-        Plotly.newPlot('table-raw-data-chart', pie_chart.data, pie_chart.layout);
+        var plotDiv = document.getElementById('plot');
+        var traces = new Array();
+        traces = data.traces;
+        var layout = {
+            'title': 'Detailed chart for ' + intToIP(document.getElementById("raw-data-device-select").value),
+            'paper_bgcolor': "rgba(0,0,0,0)",
+            'plot_bgcolor' : 'rgba(0,0,0,0)'
+        };
+
+        Plotly.newPlot('table-raw-data-chart', traces, layout);
     }
 }
 
@@ -1379,19 +1405,37 @@ function updateRawDataDevice() {
         AddElement("select","raw-data-time-form","raw-data-time-select","class_table_cell_50",null,attributes);
         var attributes = new Array();
         attributes = [
-            [ {"name": "value", "value": 300} ],
-            [ {"name": "value", "value": 600} ],
-            [ {"name": "value", "value": 1200} ],
-            [ {"name": "value", "value": 2400} ],
-            [ {"name": "value", "value": 3600} ]
+            [ {"name": "value", "value": 900} ],
+            [ {"name": "value", "value": 1800} ],
+            [ {"name": "value", "value": 3600} ],
+            [ {"name": "value", "value": 3600*2} ],
+            [ {"name": "value", "value": 3600*3} ],
+            [ {"name": "value", "value": 3600*4} ],
+            [ {"name": "value", "value": 3600*5} ],
+            [ {"name": "value", "value": 3600*6} ],
+            [ {"name": "value", "value": 3600*7} ],
+            [ {"name": "value", "value": 3600*8} ],
+            [ {"name": "value", "value": 3600*9} ],
+            [ {"name": "value", "value": 3600*10} ],
+            [ {"name": "value", "value": 3600*11} ],
+            [ {"name": "value", "value": 3600*12} ]
         ];
         var inners = new Array();
         inners = [
-            "5 min ago",
-            "10 min ago",
-            "20 min ago",
-            "40 min ago",
-            "60 min ago"
+            "15 min ago",
+            "30 min ago",
+            "1 hour ago",
+            "2 hours ago",
+            "3 hours ago",
+            "4 hours ago",
+            "5 hours ago",
+            "6 hours ago",
+            "7 hours ago",
+            "8 hours ago",
+            "9 hours ago",
+            "10 hours ago",
+            "11 hours ago",
+            "12 hours ago"
         ]
 
         for (var i=0;i<inners.length;i++) {
@@ -1435,7 +1479,7 @@ function updateRawDataDevice() {
 
         AddElement("div","raw-data-group-form","raw-data-group-none","class_table_row");
         AddElement("div","raw-data-group-none",null,"class_table_cell_5");
-        var attributes = [ {"name": "type", "value": "radio"}, {"name": "value", "value": "null"}, {"name": "name", "value": "raw_data_group_by"} , {"name": "checked", "value": "true"} ];
+        var attributes = [ {"name": "type", "value": "radio"}, {"name": "value", "value": "none"}, {"name": "name", "value": "raw_data_group_by"} , {"name": "checked", "value": "true"} ];
         AddElement("input","raw-data-group-none",null,"class_table_cell_3",null,attributes);
         AddElement("div","raw-data-group-none",null,"class_table_cell_10","None");
 

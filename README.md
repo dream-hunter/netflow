@@ -306,6 +306,7 @@ If you gather netflow v9 information, you have to enable v9templates as well. Se
 
  **0.1.2alpha**
 
+- 03.11.2022 - Added stacked area charts instead of pie charts. A lot of changes and improvements.
 - 01.11.2022 - Added nodes feature that allows to implement distributed collectors network.
 - 01.11.2022 - Changed database structure (using PostgreSQL schemas).
 

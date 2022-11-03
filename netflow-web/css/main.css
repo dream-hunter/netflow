@@ -235,8 +235,8 @@ body {
 
 .class_table_cell, .class_table_cell_0, .class_table_cell_3, .class_table_cell_5, .class_table_cell_10, .class_table_cell_15, .class_table_cell_20, .class_table_cell_25, .class_table_cell_30, .class_table_cell_40, .class_table_cell_50,
 .class_table_label, .class_table_label_3, .class_table_label_5, .class_table_label_10, .class_table_label_15, .class_table_label_20, .class_table_label_25, .class_table_label_30, .class_table_label_40, .class_table_label_50 {
- margin-left:5px;
- margin-right:5px;
+ margin-left:0px;
+ margin-right:0px;
  margin-top:auto;
  margin-bottom:auto;
 }
