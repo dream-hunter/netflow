@@ -16,6 +16,7 @@ sub pgsql_connect {
     my $config         = $_[0];
     my $loglevel       = $_[1];
 
+    my $db             = undef;
     my $dbi            = undef;
     my $dbengine       = $config->{"db"}->{"dbengine"};
     my $dbhost         = $config->{"db"}->{"dbhost"};
@@ -31,7 +32,8 @@ sub pgsql_connect {
         logmessage("Wrong database configuration\n",$loglevel);
         return undef;
     }
-    my $db = DBI->connect("$dbi", "$dbuser", "$dbpass") || die "Could not connect to database:\n$DBI::errstr\n";
+    $db = DBI->connect("$dbi", "$dbuser", "$dbpass") || return undef;
+#    $db = DBI->connect("$dbi", "$dbuser", "$dbpass") || die "Could not connect to database:\n$DBI::errstr\n";
     logmessage (" - Success\n", $loglevel);
 
     return $db;
