@@ -307,6 +307,9 @@ Also there are problems with sending OIF information because of internal routing
 **After daemon launch and sending netflow data there will appear new devices. It will be disabled by default. You have to enable it to start gather information.
 If you gather netflow v9 information, you have to enable v9templates as well. Sensors (routers) may not send v9template instantly after enabling device, so you have to wait a few minutes before it appears.**
 
+# KNOWN ISSUES:
+- Daemons stops on reboot postgres servers;
+
 # CHANGELOG:
 
  **0.1.2alpha**
