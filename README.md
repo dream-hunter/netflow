@@ -308,7 +308,7 @@ Also there are problems with sending OIF information because of internal routing
 If you gather netflow v9 information, you have to enable v9templates as well. Sensors (routers) may not send v9template instantly after enabling device, so you have to wait a few minutes before it appears.**
 
 # KNOWN ISSUES:
-- Daemons stops on reboot postgres servers;
+- Daemons stops on reboot postgres servers. Will be fixed soon.
 
 # CHANGELOG:
 
