@@ -1319,15 +1319,17 @@ function updateRawDataDevice() {
         var attributes = [ {"name": "value", "value": "null"} ];
         AddElement("option","raw-data-v9templates-select","raw-data-v9templates-select-default",null,"None",attributes);
 
-        for (var i=0;i < v9templates.length;i++) {
-            if (v9templates[i].device_id == dev_id) {
-                if (document.getElementById("raw-data-v9templates-form")) {
-                    document.getElementById("raw-data-v9templates-form").className = "class_table_row";
-                    DelElement("raw-data-v9templates-select-default");
-                }
-                if (v9templates[i].template_enabled == "t") {
-                    var attributes = [ {"name": "value", "value": v9templates[i].template_id} ];
-                    AddElement("option","raw-data-v9templates-select",null,null,v9templates[i].template_id,attributes);
+        if (v9templates !== null && v9templates !== "null" && v9templates.length > 0) {
+            for (var i=0;i < v9templates.length;i++) {
+                if (v9templates[i].device_id == dev_id) {
+                    if (document.getElementById("raw-data-v9templates-form")) {
+                        document.getElementById("raw-data-v9templates-form").className = "class_table_row";
+                        DelElement("raw-data-v9templates-select-default");
+                    }
+                    if (v9templates[i].template_enabled == "t") {
+                        var attributes = [ {"name": "value", "value": v9templates[i].template_id} ];
+                        AddElement("option","raw-data-v9templates-select",null,null,v9templates[i].template_id,attributes);
+                    }
                 }
             }
         }
