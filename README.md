@@ -49,8 +49,8 @@ There is the three big steps to see netflow data on your dashboard:
 ## Netflow server pre-installation guide
 ### FreeBSD
 *You need root permissions to perform installation*
-1. Install OS to your server;
-2. Update/upgrade your ports/packages collection:
+1. Install OS on your server;
+2. Update/upgrade it's ports/packages collection:
 ```
 pkg update
 pkg upgrade
@@ -59,7 +59,7 @@ pkg upgrade
 ```
 pkg install perl5 p5-App-cpanminus p5-App-cpanoutdated p5-JSON p5-DateTime p5-DBI p5-DBD-Pg postgresql13-server git
 ```
-If you going install netflow-analyzer and netflow-web, you need also:
+If you going install netflow-analyzer and/or netflow-web, you need also:
 ```
 pkg install apache24 php81 php81-pgsql mod_php81 php81-extensions
 ```
@@ -72,6 +72,7 @@ echo "host netflow netflow 0.0.0.0/0 trust" >> /var/db/postgres/data13/pg_hba.co
 /usr/local/etc/rc.d/postgresql start
 ```
 *Note: It's better to replace 0.0.0.0/0 to your analyzer server ip in pg_hba.conf. For example "host netflow netflow 10.10.10.10/32 trust*".
+
 5. Update/Install Perl modules:
 ```
 cpanm App::cpanoutdated
