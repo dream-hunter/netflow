@@ -184,8 +184,8 @@ sub pgsql_table_check {
         } else {
             logmessage ("Table $schema.$table_name does not exists\n", $loglevel);
         }
+        $db->disconnect;
     }
-    $db->disconnect;
     return $result;
 }
 
@@ -319,10 +319,10 @@ sub pgsql_table_insert {
 
             $result=$request->{pgsql_insertid};
             $request->finish();
-            $db->disconnect;
         } else {
             logmessage("INSERT TABLE ERROR\n", $loglevel);
         }
+        $db->disconnect;
     } else {
         logmessage("INSERT TABLE ERROR - Can't connect to DB\n", $loglevel);
     }
@@ -450,10 +450,10 @@ sub pgsql_table_update {
 
             $result=$request->{pgsql_insertid};
             $request->finish();
-            $db->disconnect;
         } else {
             logmessage("UPDATE TABLE ERROR\n", $loglevel);
         }
+        $db->disconnect;
     } else {
         logmessage("UPDATE TABLE ERROR - Can't connect to DB\n", $loglevel);
     }
