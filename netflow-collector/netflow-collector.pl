@@ -123,8 +123,12 @@ sub main_proc {
                 if ($v9thread->{"service"}->is_joinable || !$v9thread->{"service"}->is_running) {
                     logmessage("Service thread exists. Need restart...\n", $loglevel);
                     my $data = $v9thread->{"service"}->join;
-                    $devices   = dclone $data->{"devices"};
-                    $templates = dclone $data->{"templates"};
+                    if (defined $data->{"devices"}) {
+                        $devices   = dclone $data->{"devices"};
+                    }
+                    if (defined $data->{"templates"}) {
+                        $templates = dclone $data->{"templates"};
+                    }
                     undef $v9thread->{"service"};
                     $v9thread->{"service"}=threads->new(\&thread_service,$config,$loglevel);
                 }
