@@ -1319,7 +1319,7 @@ function updateRawDataDevice() {
         var attributes = [ {"name": "value", "value": "null"} ];
         AddElement("option","raw-data-v9templates-select","raw-data-v9templates-select-default",null,"None",attributes);
 
-        if (v9templates !== null && v9templates !== "null" && v9templates.length > 0) {
+        if (typeof v9templates !== 'undefined' && v9templates.length > 0) {
             for (var i=0;i < v9templates.length;i++) {
                 if (v9templates[i].device_id == dev_id) {
                     if (document.getElementById("raw-data-v9templates-form")) {
