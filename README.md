@@ -291,6 +291,7 @@ interface GigabitEthernet0/x
 ### Juniper
 Jflow SRX320/340/345:
 ```
+set forwarding-options sampling input rate 100
 set forwarding-options sampling family inet output flow-server 10.10.10.10 port 9998
 set forwarding-options sampling family inet output flow-server 10.10.10.10 source-address 20.20.20.20
 set interfaces reth2 unit 0 family inet sampling input
