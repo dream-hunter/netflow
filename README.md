@@ -111,8 +111,7 @@ cd ~/netflow/netflow-collector/sql/ && psql -U postgres -a -f reinstall_collecto
 ```
 5. Configure and launch collector
 ```
-cd ~/netflow/netflow-collector
-cp config.json.orig config.json
+cd ~/netflow/netflow-collector && cp config.json.orig config.json
 /usr/local/bin/perl ./netflow-collector.pl
 ```
 6. If there is no error messages and it continue work press ctrl+c and start it as daemon:
@@ -312,6 +311,7 @@ If you gather netflow v9 information, you have to enable v9templates as well. Se
 
  **0.1.2alpha**
 
+- 05.11.2022 - Bugfixes.
 - 03.11.2022 - Added stacked area charts instead of pie charts. A lot of changes and improvements.
 - 01.11.2022 - Added nodes feature that allows to implement distributed collectors network.
 - 01.11.2022 - Changed database structure (using PostgreSQL schemas).
