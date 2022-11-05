@@ -37,7 +37,7 @@ sub sigusr1_handler {
 if (defined $ARGV[0] && $ARGV[0] eq "-daemonize") {
    my $name          = "netflow";
    my $error_log_qfn = "/var/log/$name.log";
-   my $pid_file_qfn  = "/var/run/$name.pid";
+   my $pid_file_qfn  = "/var/run/$name/$name-analyzer.pid";
 
    daemonize(
       close  => 'std',
