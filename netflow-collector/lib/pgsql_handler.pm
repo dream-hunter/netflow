@@ -33,7 +33,6 @@ sub pgsql_connect {
         return undef;
     }
     $db = DBI->connect("$dbi", "$dbuser", "$dbpass") || return undef;
-#    $db = DBI->connect("$dbi", "$dbuser", "$dbpass") || die "Could not connect to database:\n$DBI::errstr\n";
     logmessage (" - Success\n", $loglevel);
 
     return $db;

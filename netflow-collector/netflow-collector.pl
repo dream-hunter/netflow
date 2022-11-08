@@ -429,7 +429,7 @@ sub v9thread {
                                 my $result = pgsql_table_insert($config,"v9templates", $fields, $values, $loglevel);
                         } else {
                             my $result;
-                                $result = pgsql_table_select($config,"*", "v9templates", "device_id='$peer_address' AND template_id='$template_id'", $loglevel);
+                            $result = pgsql_table_select($config,"*", "v9templates", "device_id='$peer_address' AND template_id='$template_id'", $loglevel);
                             my $template = table_serialise($result, "template_id", $loglevel);
                             if (($template->{$template_id}->{template_length} eq $templates->{$template_id}->{template_length}) &&
                                 ($template->{$template_id}->{template_format} eq $templates->{$template_id}->{template_format}) &&
