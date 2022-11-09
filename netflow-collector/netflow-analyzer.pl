@@ -37,7 +37,13 @@ sub sigusr1_handler {
 if (defined $ARGV[0] && $ARGV[0] eq "-daemonize") {
    my $name          = "netflow";
    my $error_log_qfn = "/var/log/$name.log";
+   if (defined $config->{"options"}->{"logfile"}) {
+        $error_log_qfn  = $config->{"options"}->{"logfile"};
+    }
    my $pid_file_qfn  = "/var/run/$name/$name-analyzer.pid";
+   if (defined $config->{"options"}->{"pidfile"}) {
+        $pid_file_qfn  = $config->{"options"}->{"pidfile"};
+    }
 
    daemonize(
       close  => 'std',

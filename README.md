@@ -77,7 +77,7 @@ exit
 5. Update/Install Perl modules:
 ```
 sudo cpanm App::cpanoutdated
-sudo cpan-outdated -p | cpanm
+sudo cpan-outdated -p | sudo cpanm
 sudo cpanm Daemon::Daemonize
 ```
 6. Synchronize your server clock with NTP time server:
@@ -94,6 +94,7 @@ sudo touch /var/log/netflow.log
 sudo chown -R netflow:netflow /var/log/netflow.log
 sudo mkdir /var/run/netflow
 sudo chown -R netflow:netflow /var/run/netflow
+echo "d /run/netflow 2775 netflow netflow - -" | sudo tee -a /usr/lib/tmpfiles.d/netflow-common.conf
 ```
 ### FreeBSD
 *You need root permissions to perform installation*
@@ -247,7 +248,7 @@ cp config.json.orig config.json
 ```
 If there is no error messages and it continue work press ctrl+c and start it as daemon:
 ```
-/usr/bin/perl ./netflow-analyzer.pl -daemonize
+cd ~/netflow/netflow-collector/ && /usr/bin/perl ./netflow-analyzer.pl -daemonize
 ```
 6. To make sure that analyzer works, you can try the following commands:
 ```
