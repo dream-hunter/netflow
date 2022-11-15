@@ -11,8 +11,7 @@
         "options" : {
             "listenport"             : 9998,
             "device_update_interval" : 10,
-            "bincleanup"             : 86400,
-            "pidfile"                : "/var/run/netflow/netflow-collector.pid"
+            "bincleanup"             : 86400
         }
     },
     "analyzer" : {
@@ -38,8 +37,7 @@
         },
         "options" : {
             "bincleanup"    : 86400,
-            "data-interval" : 300,
-            "pidfile"       : "/var/run/netflow/netflow-analyzer.pid"
+            "data-interval" : 300
         }
     }
 }

@@ -7,7 +7,7 @@ Netflow project used to gather, store and process netflow data from sensors like
 Collector and analyzer:
 This is a multithreaded application (daemon). After getting data, it transfers data to analyzer, which process it and send into database. The program based on perl language.
 
-Monitor used for displaying processed data. It based on PHP.
+Monitor used for displaying processed data. It based on PHP (API) and Javascript.
 
 # HARDWARE REQUIREMENTS:
 
@@ -24,6 +24,10 @@ Internet connection (used for software installation)
 3) Installed PostgreSQL - https://www.postgresql.org/
 4) Installed PHP v7.4 - http://www.php.net
 5) Installed Apache - http://apache.org
+
+# PROVIDED WITH:
+
+Plotly JavaScript Open Source Graphing Library - https://plotly.com/javascript/
 
 # FEATURES:
 

@@ -26,7 +26,7 @@ if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start'])
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"", "sum(\"packetDeltaCount\") as \"packetDeltaCount\"");
     $fieldlist = array("sourceIPv4Address", "destinationIPv4Address", "sourceTransportPort", "destinationTransportPort", "protocolIdentifier");
 #Forming up required conditions
-    $condition = "(\"unixseconds\">=" . $_GET['start'] . " AND \"unixseconds\"<=" . $_GET['end'] . ")";
+    $condition = "(\"egressInterface\" > 0 AND \"ingressInterface\" > 0) AND (\"unixseconds\">=" . $_GET['start'] . " AND \"unixseconds\"<=" . $_GET['end'] . ")";
     if (isset ($_GET['srcip']) || isset ($_GET['dstip'])) {
         $condition .= " AND (";
         if (isset ($_GET['srcip'])) {
