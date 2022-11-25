@@ -233,15 +233,14 @@ body {
 }
 
 
-.class_table_cell, .class_table_cell_0, .class_table_cell_3, .class_table_cell_5, .class_table_cell_10, .class_table_cell_15, .class_table_cell_20, .class_table_cell_25, .class_table_cell_30, .class_table_cell_40, .class_table_cell_50,
-.class_table_label, .class_table_label_3, .class_table_label_5, .class_table_label_10, .class_table_label_15, .class_table_label_20, .class_table_label_25, .class_table_label_30, .class_table_label_40, .class_table_label_50 {
+[class*="table_cell"], [class*="table_label"] {
  margin-left:0px;
  margin-right:0px;
  margin-top:auto;
  margin-bottom:auto;
 }
 
-.class_table_label, .class_table_label_0, .class_table_label_3, .class_table_label_5, .class_table_label_10, .class_table_label_15, .class_table_label_20, .class_table_label_25, .class_table_label_30, .class_table_label_40, .class_table_label_50 {
+[class*="table_label"] {
  text-align:right;
 }
 
@@ -251,33 +250,83 @@ body {
 .class_table_cell_0, .class_table_label_0 {
  display:flex;
 }
-.class_table_cell_3, .class_table_label_3 {
+
+[class*="table_col"] {
+ margin-left:0px;
+ margin-right:0px;
+ margin-top:0px;
+ margin-bottom:0px;
+ height:100%;
  display:flex;
+ flex-direction:column;
+}
+
+.class_table_col {
+ margin-right:auto;
+}
+
+[class$="_3"] {
  width:3%;
 }
-.class_table_cell_5, .class_table_label_5 {
+
+[class$="_5"] {
  width:5%;
 }
-.class_table_cell_10, .class_table_label_10 {
+
+[class$="_10"] {
  width:10%;
 }
-.class_table_cell_15, .class_table_label_15 {
+
+[class$="_15"] {
  width:15%;
 }
-.class_table_cell_20, .class_table_label_20 {
+
+[class$="_20"] {
  width:20%;
 }
-.class_table_cell_25, .class_table_label_25 {
+
+[class$="_25"] {
  width:25%;
 }
-.class_table_cell_30, .class_table_label_30 {
+
+[class$="_30"] {
  width:30%;
 }
-.class_table_cell_40, .class_table_label_40 {
+
+[class$="_35"] {
+ width:35%;
+}
+
+[class$="_40"] {
  width:40%;
 }
-.class_table_cell_50, .class_table_label_50 {
+
+[class$="_45"] {
+ width:45%;
+}
+
+[class$="_50"] {
  width:50%;
+}
+
+[class$="_55"] {
+ width:55%;
+}
+
+[class$="_60"] {
+ width:60%;
+}
+
+[class$="_65"] {
+ width:65%;
+}
+
+[class$="_70"] {
+ width:70%;
+}
+
+[class$="_75"] {
+ width:75%;
 }
 
 .menubox {

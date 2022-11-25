@@ -74,6 +74,7 @@ function setElementClass(id, class_name) {
 
 function hideAllTabs() {
     hideElement("dashboard-tab-label");
+    hideElement("mac-data-label");
     hideElement("devices-tab-label");
     hideElement("interfaces-tab-label");
     hideElement("v9templates-tab-label");
@@ -81,6 +82,7 @@ function hideAllTabs() {
     hideElement("admin-tab-label");
 
     hideElement("content-dashboard-tab");
+    hideElement("content-mac-data-tab");
     hideElement("content-devices-tab");
     hideElement("content-interfaces-tab");
     hideElement("content-v9templates-tab");
@@ -88,6 +90,7 @@ function hideAllTabs() {
     hideElement("content-admin-tab");
 
     hideElement("dashboard-toolbar");
+    hideElement("mac-data-toolbar");
     hideElement("devices-toolbar");
     hideElement("interfaces-toolbar");
     hideElement("v9templates-toolbar");
@@ -97,6 +100,7 @@ function hideAllTabs() {
 
 function showAuthTabs(user) {
     setElementClass("dashboard-tab-label", "tab_label");
+    setElementClass("mac-data-tab-label", "tab_label");
     if (typeof user !== 'undefined' && user !== null && user.user_enabled == 't') {
         if (user.group_reader == 't') {
             setElementClass("raw-data-tab-label", "tab_label");
@@ -164,6 +168,13 @@ function SwitchTab (tab_id) {
             document.getElementById(tab_id).className = "visible";
             document.getElementById("dashboard-tab").checked = true;
         });
+    }
+    if (tab_id == "content-mac-data-tab") {
+        showAuthTabs(user);
+        clearMacDBTab();
+        document.getElementById("process-screen").className = "invisible";
+        document.getElementById(tab_id).className = "visible";
+        document.getElementById("mac-data-tab").checked = true;
     }
     if (tab_id == "content-devices-tab") {
         getJSON('./php/itemlist.php?devices',  function(err, data) {
@@ -300,7 +311,10 @@ function addExternalLinks() {
                     }
                     var attributes = [ {"name": "target", "value": "_blank"}, {"name": "rel", "value": "noopener noreferrer"}, {"name": "href", "value": links[i].link_href} ];
                     AddElement("a","dashboard-link"+links[i].link_id,null,"class_table_cell_0", links[i].link_header, attributes);
-                    AddElement("a","dashboard-link"+links[i].link_id,null,"class_table_cell", links[i].link_description);
+                    if (typeof links[i].link_description !== 'undefined' && links[i].link_description !== null && links[i].link_description !== '') {
+                        AddElement("div","dashboard-link"+links[i].link_id,null,"class_table_cell_0", "&emsp;-&emsp;");
+                        AddElement("a","dashboard-link"+links[i].link_id,null,"class_table_cell", links[i].link_description);
+                    }
                 }
             }
         }
@@ -413,6 +427,77 @@ function delDashboardLinkDialogue() {
     var attributes = [ {"name": "onclick", "value": "hideElement('dialogue-stage');"} ];
     AddElement("div","dialogue-bottom-line",null,"dialogue_button","No",attributes);
     AddElement("div","dialogue-bottom-line",null,"dialogue_vertical_spacer");
+}
+
+function clearMacDBTab() {
+    DelElement('tab-mac-data-table');
+    AddElement("div","content_mac_data_tab","tab-mac-data-table","class_table");
+    var attributes = [ {"name": "style", "value": style="height:100%;"} ];
+    AddElement("div","tab-mac-data-table","tab-mac-data-columns","class_table_row",null,attributes);
+
+    AddElement("div","tab-mac-data-columns","table-mac-data-input","class_table_col_25");
+    var attributes = [ {"name": "style", "value": style="text-align:center;margin-left:auto;margin-right:auto;width:95%;"}, { "name": "onclick", "value": "resolveMACDB();"} ];
+    AddElement("div","table-mac-data-input","table-mac-data-input-btn","dialogue_button","Resolve",attributes);
+    var attributes = [ {"name": "style", "value": style="text-align:center;height:50%;resize:none;margin-left:auto;margin-right:auto;width:calc(95% + 4px);"} ];
+    AddElement("textarea","table-mac-data-input","table-mac-data-input-text","class_table_row",null,attributes);
+
+    AddElement("div","tab-mac-data-columns","table-mac-data-spacer","class_table_col_25");
+
+    AddElement("div","tab-mac-data-columns","table-mac-data-output","class_table_col_50");
+    AddElement("div","table-mac-data-output","table-mac-data-header","class_table_row");
+    AddElement("div","table-mac-data-header",null,"class_table_cell_25","MAC address");
+    AddElement("div","table-mac-data-header",null,"class_table_cell","Vendor name");
+
+    AddElement("div","table-mac-data-output","table-mac-data-table","class_table");
+}
+
+function resolveMACDB() {
+    document.getElementById("process-screen").className = "process_splash";
+
+    getJSON('./php/macdb/macdb.php',  function(err, data) {
+        if (err != null) {
+            console.error(err);
+        } else {
+            var macDB = data;
+            DelElement("table-mac-data-table");
+            AddElement("div","table-mac-data-output","table-mac-data-table","class_table");
+            showMACDB(macDB);
+        }
+        document.getElementById("process-screen").className = "invisible";
+    });
+}
+
+function showMACDB(macDB) {
+    var stringList = new Array();
+    var stringArr = new Array();
+    var macList = document.getElementById("table-mac-data-input-text").value;
+    stringList = macList.split("\n");
+
+    for (var i=0;i<stringList.length;i++) {
+        if (stringList[i] !== "") {
+            stringArr = stringList[i].split(":");
+            stringList[i] = stringArr.join("");
+            stringArr = stringList[i].split("-");
+            stringList[i] = stringArr.join("");
+            stringArr = stringList[i].split(".");
+            stringList[i] = stringArr.join("");
+            stringArr = stringList[i].split(" ");
+            stringList[i] = stringArr.join("");
+
+            AddElement("div","table-mac-data-table","table-mac-data-table-row-"+i,"class_table_row");
+            AddElement("div","table-mac-data-table-row-"+i,null,"class_table_cell_25",stringList[i]);
+
+            stringList[i] = stringList[i].slice(0,6);
+            stringList[i] = stringList[i].toUpperCase();
+
+
+            if (typeof macDB.MAL[stringList[i]] !== 'undefined' && macDB.MAL[stringList[i]] !== null) {
+                AddElement("div","table-mac-data-table-row-"+i,null,"class_table_cell_25",macDB.MAL[stringList[i]].vendor_name);
+            } else {
+                AddElement("div","table-mac-data-table-row-"+i,null,"class_table_cell_25","UNKNOWN");
+            }
+        }
+    }
 }
 
 function clearDeviceTab() {

@@ -25,6 +25,8 @@
                     <div class="toolbar_item_text">Delete link</div>
                 </div>
             </div>
+            <div id="mac-data-toolbar" class="invisible">
+            </div>
             <div id="devices-toolbar" class="invisible">
                 <div class="toolbar_item"; onmouseover="this.style.backgroundColor = '#000060'"; onmouseout="this.style.backgroundColor = 'inherit'"; onclick="SwitchTab('content-devices-tab');";>
                     <img class="toolbar_item_img"; src=img/refresh-white.png></img>
@@ -192,6 +194,9 @@
                 <input id="dashboard-tab" class="tab_input" type="radio" name="tabs" onclick="SwitchTab(this.value);" value="content-dashboard-tab" checked>
                 <label id="dashboard-tab-label" class="tab_label" for="dashboard-tab" title="dashboard">Dashboard</label>
 
+                <input id="mac-data-tab" class="tab_input" type="radio" name="tabs" onclick="SwitchTab(this.value);" value="content-mac-data-tab">
+                <label id="mac-data-tab-label" class="invisible" for="mac-data-tab" title="Mac DB">Mac DB</label>
+
                 <input id="devices-tab" class="tab_input" type="radio" name="tabs" onclick="SwitchTab(this.value);" value="content-devices-tab">
                 <label id="devices-tab-label" class="invisible" for="devices-tab" title="devices">Devices</label>
 
@@ -212,6 +217,14 @@
                 <div id="header-dashboard-tab" class="class_header">Dashboard page</div>
                 <div id="tab-dashboard-table" class="class_table">
                     <div id="table-dashboard-header" class="class_table_row_header"></div>
+                </div>
+            </div>
+            </section>
+            <section id="content-mac-data-tab" class="invisible">
+            <div id="content_mac_data_tab" class="tab_content">
+                <div id="header-mac-data-tab" class="class_header">Mac DB</div>
+                <div id="tab-mac-data-table" class="class_table">
+                    <div id="table-mac-data-header" class="class_table_row_header"></div>
                 </div>
             </div>
             </section>
