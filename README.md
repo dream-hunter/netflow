@@ -65,7 +65,7 @@ sudo apt install -y dialog ntpdate git perl cpanminus cpanoutdated postgresql li
 ```
 If you going install netflow-analyzer and/or netflow-web, you need also:
 ```
-sudo apt install -y apache2 php8.1 php8.1-pgsql
+sudo apt install -y apache2 php8.1 php8.1-pgsql php8.1-snmp
 ```
 4. Configure, initiate and start your local DB server:
 ```
@@ -114,7 +114,7 @@ pkg install perl5 p5-App-cpanminus p5-App-cpanoutdated p5-JSON p5-DateTime p5-DB
 ```
 If you going install netflow-analyzer and/or netflow-web, you need also:
 ```
-pkg install apache24 php81 php81-pgsql mod_php81 php81-extensions
+pkg install apache24 php81 php81-pgsql mod_php81 php81-extensions php81-snmp
 ```
 4. Configure, initiate and start your local DB server:
 ```

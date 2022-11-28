@@ -86,7 +86,7 @@ if (isset($_GET['device_id']) && isset($_GET['interface_discover'])) {
         }
         $tablename = "\"$analyzer_schema\".\"interfaces\"";
         $query = "DELETE FROM $tablename WHERE device_id='".$_GET['device_id']."';";
-        $result['result'][] = $query;
+//        $result['result'] = $query;
         $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
 
         $fieldlist = array("device_id","interface_id","interface_name","interface_alias","interface_bandwidth","interface_enabled","interface_primary");
