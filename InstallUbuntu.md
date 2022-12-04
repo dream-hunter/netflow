@@ -1,4 +1,4 @@
-# INSTALLATION GUIDE
+# Installation guide
 There is the three big steps to see netflow data on your dashboard:
 
 1. Netflow collector installation;
@@ -7,7 +7,9 @@ There is the three big steps to see netflow data on your dashboard:
 
 3. Routers(sensors) configuration.
 
-## Netflow server pre-installation guide
+## Before start
+
+### Netflow server pre-installation guide
 *You need root permissions to perform installation*
 
 1. Install OS on your server;
@@ -62,7 +64,10 @@ chown -R netflow:netflow /var/log/netflow.log
 mkdir /var/run/netflow
 chown -R netflow:netflow /var/run/netflow
 ```
-## Netflow collector guide
+
+## System configuration
+
+### Netflow collector guide
 
 1. Login as netflow user.
 

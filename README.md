@@ -1,5 +1,3 @@
-Warning: USE OF THIS PRODUCT IMPLIES APPROPRIATE KNOWLEDGE IN THE SERVER AND NETWORK ADMINISTRATION.
-
 # Description:
 
 Netflow project used to gather, store and process netflow data from sensors like Cisco routers. The project includes collector, analyzer and monitor.
@@ -8,6 +6,18 @@ Collector and analyzer:
 This is a multithreaded application (daemon). After getting data, it transfers data to analyzer, which process it and send into database. The program based on perl language.
 
 Monitor used for displaying processed data. It based on PHP (API) and Javascript.
+
+# Features:
+
+- separated collectors nodes;
+
+- multithreading;
+
+- working with netflow v5 and v9;
+
+- processing data on fly;
+
+- storing data in PostgreSQL;
 
 # Hardware requirements:
 
@@ -37,19 +47,9 @@ Monitor used for displaying processed data. It based on PHP (API) and Javascript
 
 Plotly JavaScript Open Source Graphing Library - https://plotly.com/javascript/
 
-# Features:
-
-- separated collectors nodes;
-
-- multithreading;
-
-- working with netflow v5 and v9;
-
-- processing data on fly;
-
-- storing data in PostgreSQL;
-
 # Warning:
+
+!!! USE OF THIS PRODUCT IMPLIES APPROPRIATE KNOWLEDGE IN THE SERVER AND NETWORK ADMINISTRATION !!!
 
 !!! Project does not works with CiscoASA sensors !!!
 
