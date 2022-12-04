@@ -173,5 +173,7 @@ admin/admin
 user/user
 ```
 
+11. Configure your router to send netflow data to your collector node(s).
+
 **After daemon launch and sending netflow data there will appear new devices. It will be disabled by default. You have to enable it to start gather information.
 If you gather netflow v9 information, you have to enable v9templates as well. Sensors (routers) may not send v9template instantly after enabling device, so you have to wait a few minutes before it appears.**
