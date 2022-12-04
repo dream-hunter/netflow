@@ -1,3 +1,5 @@
+![netflow-schema](https://user-images.githubusercontent.com/25764692/204842421-f292c9fb-72b9-4627-9a96-a5f71e133bd0.png)
+
 # Description:
 
 Netflow project used to gather, store and process netflow data from sensors like Cisco routers. The project includes collector, analyzer and monitor.
