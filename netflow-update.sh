@@ -1,8 +1,8 @@
 #!/bin/bash
 
-echo 'netflow-update.sh' > .gitignore
-echo 'config.json' >> .gitignore
+echo 'config.json' > .gitignore
 echo 'config.php' >> .gitignore
+echo 'macdb.php.html' >> .gitignore
 
 rm -fr .git
 git init
