@@ -89,7 +89,7 @@ if (isset($_GET['tables'])) {
                     pg_indexes_size(table_name) AS indexes_size,
                     pg_total_relation_size(table_name) AS total_size
                 FROM (
-                    SELECT ('"' || table_schema || '"."' || table_name || '"') AS table_name
+                    SELECT ('\"' || table_schema || '\".\"' || table_name || '\"') AS table_name
                     FROM information_schema.tables
                 ) AS all_tables
                 WHERE \"table_name\" LIKE '%collector%bin_%' OR \"table_name\" LIKE '%collector%v5_%'
@@ -111,7 +111,7 @@ if (isset($_GET['tables'])) {
                     pg_indexes_size(table_name) AS indexes_size,
                     pg_total_relation_size(table_name) AS total_size
                 FROM (
-                    SELECT ('"' || table_schema || '"."' || table_name || '"') AS table_name
+                    SELECT ('\"' || table_schema || '\".\"' || table_name || '\"') AS table_name
                     FROM information_schema.tables
                 ) AS all_tables
                 WHERE \"table_name\" LIKE '%analyzer%tmp_%' OR \"table_name\" LIKE '%analyzer%raw_%'
