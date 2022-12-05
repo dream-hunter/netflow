@@ -164,6 +164,7 @@ function SwitchTab (tab_id) {
             document.getElementById("dashboard-toolbar").className = "toolbar_row";
             clearDashboardTab();
             addExternalLinks();
+            addTablesInfo();
             document.getElementById("process-screen").className = "invisible";
             document.getElementById(tab_id).className = "visible";
             document.getElementById("dashboard-tab").checked = true;
@@ -280,11 +281,18 @@ function clearDashboardTab() {
     AddElement("div","content_dashboard_tab","tab-dashboard-table","class_table");
     AddElement("div","tab-dashboard-table","dashboard-links","class_table_table");
     AddElement("div","dashboard-links","dashboard-links-header","class_table_row");
-    AddElement("div","dashboard-links-header",null,"class_table_cell_5");
-    var attributes = [ {"name": "src", "value": "img/external-link-white.png"}, {"name": "style", "value": style="width:25px;height:25px;"} ];
+//    AddElement("div","dashboard-links-header",null,"class_table_cell_5");
+    var attributes = [ {"name": "src", "value": "img/external-link-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
     AddElement("img","dashboard-links-header",null,"class_table_cell_5",null,attributes);
     AddElement("div","dashboard-links-header",null,"class_table_cell","External links");
     AddElement("div","dashboard-links","dashboard-links-body","class_table_table");
+
+    AddElement("div","tab-dashboard-table","dashboard-table-info","class_table_table");
+    AddElement("div","dashboard-table-info","dashboard-table-info-header","class_table_row");
+//    AddElement("div","dashboard-table-info-header",null,"class_table_cell_5");
+    var attributes = [ {"name": "src", "value": "img/postgresql-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
+    AddElement("img","dashboard-table-info-header",null,"class_table_cell_5",null,attributes);
+    AddElement("div","dashboard-table-info-header",null,"class_table_cell","Table info");
 }
 
 function delExternalLinks() {
@@ -319,6 +327,10 @@ function addExternalLinks() {
             }
         }
     });
+}
+
+function addTablesInfo() {
+
 }
 
 function addDashboardLink() {

@@ -66,32 +66,61 @@ if (isset($_GET['ipfix'])) {
 }
 
 if (isset($_GET['links'])) {
+    $fieldlist = array("link_id","link_header","link_href","link_description");
+    $tablename = "\"$dashboard_schema\".\"links\"";
 
-#    $query = "SELECT EXISTS (
-#        SELECT FROM information_schema.tables 
-#        WHERE  table_schema = 'public'
-#        AND    table_name   = 'links'
-#    );";
-#    $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
-#    $r = pg_fetch_array($res);
-#    if ($r['exists'] != 't') {
-#        $query = "CREATE TABLE IF NOT EXISTS links (
-#            \"link_id\" serial PRIMARY KEY  NOT NULL,
-#            \"link_header\" character varying (1024),
-#            \"link_href\" character varying (4096),
-#            \"link_description\" character varying (1024)
-#        );";
-#        $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
-#    } else {
-        $fieldlist = array("link_id","link_header","link_href","link_description");
-        $tablename = "\"$dashboard_schema\".\"links\"";
+    $query = "SELECT " . implode(",", $fieldlist) . " FROM $tablename ORDER BY link_id;";
+    $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+    while($r = pg_fetch_array($res)) {
+        $result['links'][] = $r;
+    }
+}
 
-        $query = "SELECT " . implode(",", $fieldlist) . " FROM $tablename ORDER BY link_id;";
-        $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
-        while($r = pg_fetch_array($res)) {
-            $result['links'][] = $r;
-        }
-#    }
+if (isset($_GET['tables'])) {
+    $query = "SELECT
+                table_name,
+                pg_size_pretty(table_size) AS table_size,
+                pg_size_pretty(indexes_size) AS indexes_size,
+                pg_size_pretty(total_size) AS total_size
+              FROM (
+                SELECT
+                    table_name,
+                    pg_table_size(table_name) AS table_size,
+                    pg_indexes_size(table_name) AS indexes_size,
+                    pg_total_relation_size(table_name) AS total_size
+                FROM (
+                    SELECT ('"' || table_schema || '"."' || table_name || '"') AS table_name
+                    FROM information_schema.tables
+                ) AS all_tables
+                WHERE \"table_name\" LIKE '%collector%bin_%' OR \"table_name\" LIKE '%collector%v5_%'
+                ORDER BY total_size DESC
+              ) AS pretty_sizes;";
+    $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+    while($r = pg_fetch_array($res)) {
+        $result['collector'][] = $r;
+    }
+    $query = "SELECT
+                table_name,
+                pg_size_pretty(table_size) AS table_size,
+                pg_size_pretty(indexes_size) AS indexes_size,
+                pg_size_pretty(total_size) AS total_size
+              FROM (
+                SELECT
+                    table_name,
+                    pg_table_size(table_name) AS table_size,
+                    pg_indexes_size(table_name) AS indexes_size,
+                    pg_total_relation_size(table_name) AS total_size
+                FROM (
+                    SELECT ('"' || table_schema || '"."' || table_name || '"') AS table_name
+                    FROM information_schema.tables
+                ) AS all_tables
+                WHERE \"table_name\" LIKE '%analyzer%tmp_%' OR \"table_name\" LIKE '%analyzer%raw_%'
+                ORDER BY total_size DESC
+              ) AS pretty_sizes;";
+    $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+    while($r = pg_fetch_array($res)) {
+        $result['analyzer'][] = $r;
+    }
 }
 
 
