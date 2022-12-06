@@ -79,6 +79,7 @@ function hideAllTabs() {
     hideElement("interfaces-tab-label");
     hideElement("v9templates-tab-label");
     hideElement("raw-data-tab-label");
+    hideElement("statistics-tab-label");
     hideElement("admin-tab-label");
 
     hideElement("content-dashboard-tab");
@@ -87,6 +88,7 @@ function hideAllTabs() {
     hideElement("content-interfaces-tab");
     hideElement("content-v9templates-tab");
     hideElement("content-raw-data-tab");
+    hideElement("content-statistics-tab");
     hideElement("content-admin-tab");
 
     hideElement("dashboard-toolbar");
@@ -95,6 +97,7 @@ function hideAllTabs() {
     hideElement("interfaces-toolbar");
     hideElement("v9templates-toolbar");
     hideElement("raw-data-toolbar");
+    hideElement("statistics-toolbar");
     hideElement("admin-toolbar");
 }
 
@@ -104,6 +107,7 @@ function showAuthTabs(user) {
     if (typeof user !== 'undefined' && user !== null && user.user_enabled == 't') {
         if (user.group_reader == 't') {
             setElementClass("raw-data-tab-label", "tab_label");
+            setElementClass("statistics-tab-label", "tab_label");
         }
         if (user.group_writer == 't') {
             setElementClass("devices-tab-label", "tab_label");
@@ -164,7 +168,6 @@ function SwitchTab (tab_id) {
             document.getElementById("dashboard-toolbar").className = "toolbar_row";
             clearDashboardTab();
             addExternalLinks();
-            addTablesInfo();
             document.getElementById("process-screen").className = "invisible";
             document.getElementById(tab_id).className = "visible";
             document.getElementById("dashboard-tab").checked = true;
@@ -253,6 +256,22 @@ function SwitchTab (tab_id) {
             document.getElementById("raw-data-tab").checked = true;
         });
     }
+    if (tab_id == "content-statistics-tab") {
+        getJSON('./php/itemlist.php?tables',  function(err, data) {
+            if (err != null) {
+                console.error(err);
+            } else {
+                showUserName(user);
+                clearStatisticsTab();
+                addStatistics(data);
+            }
+            showAuthTabs(user);
+            document.getElementById("statistics-toolbar").className = "toolbar_row";
+            document.getElementById("process-screen").className = "invisible";
+            document.getElementById(tab_id).className = "visible";
+            document.getElementById("statistics-tab").checked = true;
+        });
+    }
     if (tab_id == "content-admin-tab") {
         getJSON('./php/admin.php?userlist&grouplist',  function(err, data) {
             if (err != null) {
@@ -279,25 +298,18 @@ function SwitchTab (tab_id) {
 function clearDashboardTab() {
     DelElement('tab-dashboard-table');
     AddElement("div","content_dashboard_tab","tab-dashboard-table","class_table");
-    AddElement("div","tab-dashboard-table","dashboard-links","class_table_table");
+    AddElement("div","tab-dashboard-table","dashboard-links","class_table");
     AddElement("div","dashboard-links","dashboard-links-header","class_table_row");
-//    AddElement("div","dashboard-links-header",null,"class_table_cell_5");
     var attributes = [ {"name": "src", "value": "img/external-link-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
     AddElement("img","dashboard-links-header",null,"class_table_cell_5",null,attributes);
     AddElement("div","dashboard-links-header",null,"class_table_cell","External links");
-    AddElement("div","dashboard-links","dashboard-links-body","class_table_table");
+    AddElement("div","dashboard-links","dashboard-links-body","class_table");
 
-    AddElement("div","tab-dashboard-table","dashboard-table-info","class_table_table");
-    AddElement("div","dashboard-table-info","dashboard-table-info-header","class_table_row");
-//    AddElement("div","dashboard-table-info-header",null,"class_table_cell_5");
-    var attributes = [ {"name": "src", "value": "img/postgresql-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
-    AddElement("img","dashboard-table-info-header",null,"class_table_cell_5",null,attributes);
-    AddElement("div","dashboard-table-info-header",null,"class_table_cell","Table info");
 }
 
 function delExternalLinks() {
     DelElement("dashboard-links-body");
-    AddElement("div","dashboard-links","dashboard-links-body","class_table_table");
+    AddElement("div","dashboard-links","dashboard-links-body","class_table");
 }
 
 function addExternalLinks() {
@@ -327,10 +339,6 @@ function addExternalLinks() {
             }
         }
     });
-}
-
-function addTablesInfo() {
-
 }
 
 function addDashboardLink() {
@@ -1195,8 +1203,6 @@ function showRawData() {
             if (data != null && data.group != null) {
                 showRawDataGroup(data);
             }
-//                console.log(data);
-            //document.getElementById("process-splash").className = "invisible";
             document.getElementById("process-screen").className = "invisible";
         }
     });
@@ -1207,12 +1213,6 @@ function showRawDataGroup(data) {
 }
 
 function showRawDataDetail(data) {
-//    var sampling = 1;
-//    for (var i=0;i<v9templates.length;i++) {
-//        if(v9templates[i].device_id == document.getElementById("raw-data-device-select").value && v9templates[i].template_id == document.getElementById("raw-data-v9templates-select").value) {
-//            sampling = v9templates[i].template_sampling;
-//        }
-//    }
     if (data.totalhosts != null && data.totalhosts.length > 0) {
         AddElement("div","raw-data-body","table-raw-data-chart","class_table_row");
         AddElement("div","raw-data-body","table-raw-data-label","class_header",intToIP(document.getElementById("raw-data-device-select").value) + " - Detailed");
@@ -1236,11 +1236,7 @@ function showRawDataDetail(data) {
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[2]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[4]]+"("+row[4]+")");
-//            if (sampling > 0) {
-//                row[5] *= sampling;
-//                row[6] *= sampling;
-//            }
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[5]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[5]));
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[6]);
         }
         var row = data.total[0];
@@ -1249,11 +1245,7 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_40","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_20");
-//        if (sampling > 0) {
-//            row[0] *= sampling;
-//            row[1] *= sampling;
-//        }
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[0]));
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
         var plotDiv = document.getElementById('plot');
@@ -1288,10 +1280,6 @@ function showRawDataDetail(data) {
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[2]]+"("+row[2]+")");
-//            if (sampling > 0) {
-//                row[3] *= sampling;
-//                row[4] *= sampling;
-//            }
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
         }
@@ -1301,10 +1289,6 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10");
-//        if (sampling > 0) {
-//            row[0] *= sampling;
-//            row[1] *= sampling;
-//        }
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
@@ -1340,10 +1324,6 @@ function showRawDataDetail(data) {
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[2]]+"("+row[2]+")");
-//            if (sampling > 0) {
-//                row[3] *= sampling;
-//                row[4] *= sampling;
-//            }
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
         }
@@ -1353,10 +1333,6 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10");
-//        if (sampling > 0) {
-//            row[0] *= sampling;
-//            row[1] *= sampling;
-//        }
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
@@ -1628,6 +1604,70 @@ function updateRawDataDevice() {
         AddElement("div","raw-data-group-button-row","raw-data-button","dialogue_button","Show",attributes);
     }
 }
+
+function clearStatisticsTab() {
+    DelElement('tab-statistics-table');
+    AddElement("div","content_statistics_tab","tab-statistics-table","class_table");
+
+    AddElement("div","tab-statistics-table","statistics-table-dbinfo-label","class_table_row");
+    var attributes = [ {"name": "src", "value": "img/postgresql-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
+    AddElement("img","statistics-table-dbinfo-label",null,"class_table_cell_5",null,attributes);
+    AddElement("div","statistics-table-dbinfo-label",null,"class_table_cell","DataBase info");
+
+    AddElement("div","tab-statistics-table","statistics-table-dbinfo","class_table");
+
+    AddElement("div","statistics-table-dbinfo","statistics-table-info-head","class_table_row");
+    AddElement("div","statistics-table-info-head",null,"class_table_cell_5");
+    AddElement("div","statistics-table-info-head",null,"class_table_cell_25","Table name");
+    AddElement("div","statistics-table-info-head",null,"class_table_cell_10","indexes size");
+    AddElement("div","statistics-table-info-head",null,"class_table_cell_10","Table size");
+    AddElement("div","statistics-table-info-head",null,"class_table_cell_10","Total size");
+}
+
+function addStatistics(tables) {
+    if (typeof links !== 'undefined' && links !== null) {
+        var indexes_size_total = 0;
+        var table_size_total = 0;
+        var total_size_total = 0;
+        for (var i=0;i<tables.analyzer.length;i++) {
+            AddElement("div","statistics-table-dbinfo","statistics-table-dbinfo"+i,"class_table_row");
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_5");
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_25",tables.analyzer[i].table_name);
+            AddElement("div","statistics-table-dbdbinfo"+i,null,"class_table_cell_10",tables.analyzer[i].indexes_size);
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables.analyzer[i].table_size);
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables.analyzer[i].total_size);
+            indexes_size_total += sizeToBytes(tables.analyzer[i].indexes_size);
+            table_size_total += sizeToBytes(tables.analyzer[i].table_size);
+            total_size_total += sizeToBytes(tables.analyzer[i].total_size);
+        }
+        AddElement("div","statistics-table-dbinfo","statistics-table-dbinfo-total","class_table_row");
+        AddElement("div","statistics-table-dbinfo-total",null,"class_table_cell_5");
+        AddElement("div","statistics-table-dbinfo-total",null,"class_table_label_25","Total:");
+        AddElement("div","statistics-table-dbinfo-total",null,"class_table_cell_10",bytesToSize(indexes_size_total));
+        AddElement("div","statistics-table-dbinfo-total",null,"class_table_cell_10",bytesToSize(table_size_total));
+        AddElement("div","statistics-table-dbinfo-total",null,"class_table_cell_10",bytesToSize(total_size_total));
+    }
+}
+
+function sizeToBytes(size) {
+    var sizes = ['bytes', 'kB', 'MB', 'GB', 'TB' , 'PB', 'EB', 'ZB', 'YB'];
+    numbers = size.split(' ');
+    pos = sizes.indexOf(numbers[1]);
+    number = Number(numbers[0]);
+    while (pos > 0) {
+        number *= 1024;
+        pos --;
+    }
+    return number;
+}
+
+function bytesToSize(bytes) {
+    var sizes = ['bytes', 'kB', 'MB', 'GB', 'TB' , 'PB', 'EB', 'ZB', 'YB'];
+    if (bytes == 0) return 'n/a';
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    if (i == 0) return bytes + ' ' + sizes[i];
+    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+};
 
 function clearAdminTab() {
     DelElement('tab-admin-table');

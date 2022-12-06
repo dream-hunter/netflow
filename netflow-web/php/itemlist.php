@@ -89,10 +89,10 @@ if (isset($_GET['tables'])) {
                     pg_indexes_size(table_name) AS indexes_size,
                     pg_total_relation_size(table_name) AS total_size
                 FROM (
-                    SELECT ('\"' || table_schema || '\".\"' || table_name || '\"') AS table_name
+                    SELECT (table_schema || '.' || table_name) AS table_name
                     FROM information_schema.tables
                 ) AS all_tables
-                WHERE \"table_name\" LIKE '%collector%bin_%' OR \"table_name\" LIKE '%collector%v5_%'
+                WHERE \"table_name\" LIKE '%collector.bin_%' OR \"table_name\" LIKE '%collector.v5_%'
                 ORDER BY total_size DESC
               ) AS pretty_sizes;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
@@ -111,15 +111,34 @@ if (isset($_GET['tables'])) {
                     pg_indexes_size(table_name) AS indexes_size,
                     pg_total_relation_size(table_name) AS total_size
                 FROM (
-                    SELECT ('\"' || table_schema || '\".\"' || table_name || '\"') AS table_name
+                    SELECT (table_schema || '.' || table_name) AS table_name
                     FROM information_schema.tables
                 ) AS all_tables
-                WHERE \"table_name\" LIKE '%analyzer%tmp_%' OR \"table_name\" LIKE '%analyzer%raw_%'
+                WHERE \"table_name\" LIKE '%analyzer.tmp_%' OR \"table_name\" LIKE '%analyzer.raw_%'
                 ORDER BY total_size DESC
               ) AS pretty_sizes;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     while($r = pg_fetch_array($res)) {
         $result['analyzer'][] = $r;
+    }
+}
+
+if (isset($_GET['schemas'])) {
+    $query = "SELECT schema_name, 
+           sum(table_size)
+        FROM (
+          SELECT pg_catalog.pg_namespace.nspname as schema_name,
+                 pg_relation_size(pg_catalog.pg_class.oid) as table_size,
+                 sum(pg_relation_size(pg_catalog.pg_class.oid)) over () as database_size
+          FROM   pg_catalog.pg_class
+             JOIN pg_catalog.pg_namespace ON relnamespace = pg_catalog.pg_namespace.oid
+        ) t
+        WHERE schema_name='collector' OR schema_name='analyzer' OR schema_name='dashboard'
+        GROUP BY schema_name, database_size";
+
+    $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+    while($r = pg_fetch_array($res)) {
+        $result['schemas'][] = $r;
     }
 }
 
