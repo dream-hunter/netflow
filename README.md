@@ -79,7 +79,8 @@ There is a few examples how-to configure routers to send netflow data to collect
 
  **0.1.4**
 
-- 06.12.2022 - Added statistics tab that shows database information;
+- 06.12.2022 - Added schemas information into dashboard tab;
+- 06.12.2022 - Added statistics tab that shows tables size information in database;
 
  **0.1.3a**
 
