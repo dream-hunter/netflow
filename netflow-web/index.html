@@ -155,6 +155,8 @@
                     <div class="toolbar_item_text"><br/>Info</div>
                 </div>
             </div>
+            <div id="statistics-toolbar" class="invisible">
+            </div>
             <div id="admin-toolbar" class="invisible">
                 <div class="toolbar_item"; onmouseover="this.style.backgroundColor = '#000060'"; onmouseout="this.style.backgroundColor = 'inherit'"; onclick="SwitchTab('content-admin-tab');";>
                     <img class="toolbar_item_img"; src=img/refresh-white.png></img>
@@ -209,6 +211,9 @@
                 <input id="raw-data-tab" class="tab_input" type="radio" name="tabs" onclick="SwitchTab(this.value);" value="content-raw-data-tab">
                 <label id="raw-data-tab-label" class="invisible" for="raw-data-tab" title="Raw data">Raw data</label>
 
+                <input id="statistics-tab" class="tab_input" type="radio" name="tabs" onclick="SwitchTab(this.value);" value="content-statistics-tab">
+                <label id="statistics-tab-label" class="invisible" for="statistics-tab" title="statistics">Statistics</label>
+
                 <input id="admin-tab" class="tab_input" type="radio" name="tabs" onclick="SwitchTab(this.value);" value="content-admin-tab">
                 <label id="admin-tab-label" class="invisible" for="admin-tab" style="float: right;" title="Admin settings">Admin</label>
             </div>
@@ -260,11 +265,11 @@
                 </div>
             </div>
             </section>
-            <section id="content-exporter-tab" class="invisible">
-            <div id="content_exporter_tab" class="tab_content">
-                <div id="header-exporter-tab" class="class_header">Exporter list</div>
-                <div id="tab-exporter-table" class="class_table">
-                    <div id="table-exporter-header" class="class_table_row_header"></div>
+            <section id="content-statistics-tab" class="invisible">
+            <div id="content_statistics_tab" class="tab_content">
+                <div id="header-statistics-tab" class="class_header">Statistics</div>
+                <div id="tab-statistics-table" class="class_table">
+                    <div id="table-statistics-header" class="class_table_row_header"></div>
                 </div>
             </div>
             </section>
