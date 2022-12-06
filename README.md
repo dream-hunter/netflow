@@ -77,11 +77,15 @@ There is a few examples how-to configure routers to send netflow data to collect
 
 # Changelog:
 
+ **0.1.4**
+
+- 06.12.2022 - Added statistics tab that shows database information;
+
  **0.1.3a**
 
-- 01.12.2022 Bug fixes;
-- 01.12.2022 Web interface improvements;
-- 01.12.2022 Added mac db page to resolve vendors by mac-address.
+- 01.12.2022 - Bug fixes;
+- 01.12.2022 - Web interface improvements;
+- 01.12.2022 - Added mac db page to resolve vendors by mac-address.
 
  **0.1.2a**
 

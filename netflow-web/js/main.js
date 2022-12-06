@@ -168,6 +168,7 @@ function SwitchTab (tab_id) {
             document.getElementById("dashboard-toolbar").className = "toolbar_row";
             clearDashboardTab();
             addExternalLinks();
+            addSchemasInfo();
             document.getElementById("process-screen").className = "invisible";
             document.getElementById(tab_id).className = "visible";
             document.getElementById("dashboard-tab").checked = true;
@@ -263,7 +264,7 @@ function SwitchTab (tab_id) {
             } else {
                 showUserName(user);
                 clearStatisticsTab();
-                addStatistics(data);
+                addStatistics(data.analyzer);
             }
             showAuthTabs(user);
             document.getElementById("statistics-toolbar").className = "toolbar_row";
@@ -298,12 +299,20 @@ function SwitchTab (tab_id) {
 function clearDashboardTab() {
     DelElement('tab-dashboard-table');
     AddElement("div","content_dashboard_tab","tab-dashboard-table","class_table");
+
     AddElement("div","tab-dashboard-table","dashboard-links","class_table");
-    AddElement("div","dashboard-links","dashboard-links-header","class_table_row");
+    AddElement("div","dashboard-links","dashboard-links-label","class_table_row");
     var attributes = [ {"name": "src", "value": "img/external-link-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
-    AddElement("img","dashboard-links-header",null,"class_table_cell_5",null,attributes);
-    AddElement("div","dashboard-links-header",null,"class_table_cell","External links");
+    AddElement("img","dashboard-links-label",null,"class_table_cell_5",null,attributes);
+    AddElement("div","dashboard-links-label",null,"class_table_cell","External links");
     AddElement("div","dashboard-links","dashboard-links-body","class_table");
+
+    AddElement("div","tab-dashboard-table","dashboard-schemas","class_table");
+    AddElement("div","dashboard-schemas","dashboard-schemas-label","class_table_row");
+    var attributes = [ {"name": "src", "value": "img/database-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
+    AddElement("img","dashboard-schemas-label",null,"class_table_cell_5",null,attributes);
+    AddElement("div","dashboard-schemas-label",null,"class_table_cell","Database schemas size");
+    AddElement("div","dashboard-schemas","dashboard-schemas-body","class_table");
 
 }
 
@@ -318,8 +327,6 @@ function addExternalLinks() {
             console.error(err);
         } else {
             links = data.links;
-//            console.log(links);
-
             if (typeof links !== 'undefined' && links !== null) {
                 for (var i=0;i<links.length;i++) {
                     AddElement("div","dashboard-links-body","dashboard-link"+links[i].link_id,"class_table_row");
@@ -334,6 +341,27 @@ function addExternalLinks() {
                     if (typeof links[i].link_description !== 'undefined' && links[i].link_description !== null && links[i].link_description !== '') {
                         AddElement("div","dashboard-link"+links[i].link_id,null,"class_table_cell_0", "&emsp;-&emsp;");
                         AddElement("a","dashboard-link"+links[i].link_id,null,"class_table_cell", links[i].link_description);
+                    }
+                }
+            }
+        }
+    });
+}
+
+function addSchemasInfo() {
+    getJSON('./php/itemlist.php?schemas',  function(err, data) {
+        if (err != null) {
+            console.error(err);
+        } else {
+            schemas = data.schemas;
+            if (typeof schemas !== 'undefined' && schemas !== null) {
+                for (var i=0;i<schemas.length;i++) {
+                    AddElement("div","dashboard-schemas-body","dashboard-schema"+i,"class_table_row");
+                    if (user.group_reader === 't') {
+                        AddElement("div","dashboard-schema"+i,null,"class_table_cell_5");
+//                        AddElement("div","dashboard-link"i,null,"class_table_cell_0", "&emsp;-&emsp;");
+                        AddElement("div","dashboard-schema"+i,null,"class_table_cell_15", schemas[i].schema_name);
+                        AddElement("div","dashboard-schema"+i,null,"class_table_cell_15", bytesToSize(schemas[i].sum));
                     }
                 }
             }
@@ -1629,16 +1657,16 @@ function addStatistics(tables) {
         var indexes_size_total = 0;
         var table_size_total = 0;
         var total_size_total = 0;
-        for (var i=0;i<tables.analyzer.length;i++) {
+        for (var i=0;i<tables.length;i++) {
             AddElement("div","statistics-table-dbinfo","statistics-table-dbinfo"+i,"class_table_row");
             AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_5");
-            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_25",tables.analyzer[i].table_name);
-            AddElement("div","statistics-table-dbdbinfo"+i,null,"class_table_cell_10",tables.analyzer[i].indexes_size);
-            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables.analyzer[i].table_size);
-            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables.analyzer[i].total_size);
-            indexes_size_total += sizeToBytes(tables.analyzer[i].indexes_size);
-            table_size_total += sizeToBytes(tables.analyzer[i].table_size);
-            total_size_total += sizeToBytes(tables.analyzer[i].total_size);
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_25",tables[i].table_name);
+            AddElement("div","statistics-table-dbdbinfo"+i,null,"class_table_cell_10",tables[i].indexes_size);
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables[i].table_size);
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables[i].total_size);
+            indexes_size_total += sizeToBytes(tables[i].indexes_size);
+            table_size_total += sizeToBytes(tables[i].table_size);
+            total_size_total += sizeToBytes(tables[i].total_size);
         }
         AddElement("div","statistics-table-dbinfo","statistics-table-dbinfo-total","class_table_row");
         AddElement("div","statistics-table-dbinfo-total",null,"class_table_cell_5");
