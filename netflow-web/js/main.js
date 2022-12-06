@@ -292,7 +292,8 @@ function clearDashboardTab() {
 //    AddElement("div","dashboard-table-info-header",null,"class_table_cell_5");
     var attributes = [ {"name": "src", "value": "img/postgresql-white.png"}, {"name": "style", "value": style="width:25px;height:25px;margin:20px;"} ];
     AddElement("img","dashboard-table-info-header",null,"class_table_cell_5",null,attributes);
-    AddElement("div","dashboard-table-info-header",null,"class_table_cell","Table info");
+    AddElement("div","dashboard-table-info-header",null,"class_table_cell","Tables size info");
+    AddElement("div","dashboard-table-info","dashboard-table-info-body","class_table_table");
 }
 
 function delExternalLinks() {
@@ -330,8 +331,64 @@ function addExternalLinks() {
 }
 
 function addTablesInfo() {
+    getJSON('./php/itemlist.php?tables',  function(err, data) {
+        if (err != null) {
+            console.error(err);
+        } else {
+            tables = data;
+            console.log(tables);
 
+            if (typeof links !== 'undefined' && links !== null) {
+                AddElement("div","dashboard-table-info-body","dashboard-table-info-head","class_table_row");
+                AddElement("div","dashboard-table-info-head",null,"class_table_cell_5");
+                AddElement("div","dashboard-table-info-head",null,"class_table_cell_25","Table name");
+                AddElement("div","dashboard-table-info-head",null,"class_table_cell_10","indexes size");
+                AddElement("div","dashboard-table-info-head",null,"class_table_cell_10","Table size");
+                AddElement("div","dashboard-table-info-head",null,"class_table_cell_10","Total size");
+                var indexes_size_total = 0;
+                var table_size_total = 0;
+                var total_size_total = 0;
+                for (var i=0;i<tables.analyzer.length;i++) {
+                    AddElement("div","dashboard-table-info-body","dashboard-table-info"+i,"class_table_row");
+                    AddElement("div","dashboard-table-info"+i,null,"class_table_cell_5");
+                    AddElement("div","dashboard-table-info"+i,null,"class_table_cell_25",tables.analyzer[i].table_name);
+                    AddElement("div","dashboard-table-info"+i,null,"class_table_cell_10",tables.analyzer[i].indexes_size);
+                    AddElement("div","dashboard-table-info"+i,null,"class_table_cell_10",tables.analyzer[i].table_size);
+                    AddElement("div","dashboard-table-info"+i,null,"class_table_cell_10",tables.analyzer[i].total_size);
+                    indexes_size_total += sizeToBytes(tables.analyzer[i].indexes_size);
+                    table_size_total += sizeToBytes(tables.analyzer[i].table_size);
+                    total_size_total += sizeToBytes(tables.analyzer[i].total_size);
+                }
+                AddElement("div","dashboard-table-info-body","dashboard-table-info-total","class_table_row");
+                AddElement("div","dashboard-table-info-total",null,"class_table_cell_5");
+                AddElement("div","dashboard-table-info-total",null,"class_table_label_25","Total:");
+                AddElement("div","dashboard-table-info-total",null,"class_table_cell_10",bytesToSize(indexes_size_total));
+                AddElement("div","dashboard-table-info-total",null,"class_table_cell_10",bytesToSize(table_size_total));
+                AddElement("div","dashboard-table-info-total",null,"class_table_cell_10",bytesToSize(total_size_total));
+            }
+        }
+    });
 }
+
+function sizeToBytes(size) {
+    var sizes = ['bytes', 'kB', 'MB', 'GB', 'TB' , 'PB', 'EB', 'ZB', 'YB'];
+    numbers = size.split(' ');
+    pos = sizes.indexOf(numbers[1]);
+    number = Number(numbers[0]);
+    while (pos > 0) {
+        number *= 1024;
+        pos --;
+    }
+    return number;
+}
+
+function bytesToSize(bytes) {
+    var sizes = ['bytes', 'kB', 'MB', 'GB', 'TB' , 'PB', 'EB', 'ZB', 'YB'];
+    if (bytes == 0) return 'n/a';
+    var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
+    if (i == 0) return bytes + ' ' + sizes[i];
+    return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i];
+};
 
 function addDashboardLink() {
     var header=document.getElementById('dialogue-input-header').value;
@@ -1240,7 +1297,7 @@ function showRawDataDetail(data) {
 //                row[5] *= sampling;
 //                row[6] *= sampling;
 //            }
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[5]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[5]));
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[6]);
         }
         var row = data.total[0];
@@ -1253,7 +1310,7 @@ function showRawDataDetail(data) {
 //            row[0] *= sampling;
 //            row[1] *= sampling;
 //        }
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[0]));
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
         var plotDiv = document.getElementById('plot');
