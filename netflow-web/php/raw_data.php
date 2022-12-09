@@ -22,7 +22,8 @@ if (isset($_GET['sampling']) && $_GET['sampling'] != 0) {
 }
 
 if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start']) && isset($_GET['end'])) {
-    $tablename = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_raw = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_tmp = "\"$analyzer_schema\".\"tmp_" . $_GET['tbl'] . "\"";
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"", "sum(\"packetDeltaCount\") as \"packetDeltaCount\"");
     $fieldlist = array("sourceIPv4Address", "destinationIPv4Address", "sourceTransportPort", "destinationTransportPort", "protocolIdentifier");
 #Forming up required conditions
@@ -75,18 +76,29 @@ if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start'])
         $limit = $_GET['limit'];
     }
 #Calculate total traffic
-    $query  = "SELECT " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition;";
+    $query  = "SELECT " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+    $query .= " UNION ";
+    $query .= "SELECT " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+    $query .= ") AS total;";
+#    echo $query;
+#    $result['query'][] = $query;
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     $r = pg_fetch_row($res);
     $r[0] *= $sampling;
     $r[1] *= $sampling;
     $result['data']['total'][] = $r;
 #Calculating total traffic for top hosts
-    $query  = "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition";
+    $query  = "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+    $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\")";
+    $query .= " UNION ";
+    $query .= "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+    $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\")";
+    $query .= ") AS total";
     $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\") ORDER BY \"octetDeltaCount\" DESC LIMIT $limit;";
 #    echo $query;
+#    $result['query'][] = $query;
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     while($r = pg_fetch_row($res)) {
         $r[5] *= $sampling;
@@ -95,9 +107,14 @@ if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start'])
     }
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"");
 #Calculating chart data for all hosts
-    $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition";
+    $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition GROUP BY (\"unixseconds\")";
+    $query .= " UNION ";
+    $query .= "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition GROUP BY (\"unixseconds\")";
+    $query .= ") AS total";
     $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
+#    echo $query;
+#    $result['query'][] = $query;
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     $trace = array();
     $trace['name'] = "0(0) -> 0(0) Proto(all)";
@@ -110,10 +127,18 @@ if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start'])
     $result['data']['traces'][] = $trace;
 #Calculating charts data for top hosts
     foreach($result['data']['totalhosts'] as $host) {
-        $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename";
-        $query .= " WHERE $condition";
+        $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
+        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
         $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"destinationIPv4Address\"='$host[1]' AND \"sourceTransportPort\"='$host[2]' AND \"destinationTransportPort\"='$host[3]' AND \"protocolIdentifier\"='$host[4]'";
+        $query .= " GROUP BY (\"unixseconds\")";
+        $query .= " UNION ";
+        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+        $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"destinationIPv4Address\"='$host[1]' AND \"sourceTransportPort\"='$host[2]' AND \"destinationTransportPort\"='$host[3]' AND \"protocolIdentifier\"='$host[4]'";
+        $query .= " GROUP BY (\"unixseconds\")";
+        $query .= ") AS total";
         $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
+#        echo $query;
+#        $result['query'][] = $query;
         $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
         $trace = array();
         $trace['name'] = "$host[0]($host[2]) -> $host[1]($host[3]) Proto($host[4])";
@@ -128,7 +153,8 @@ if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start'])
 }
 
 if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) && isset($_GET['end'])) {
-    $tablename = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_raw = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_tmp = "\"$analyzer_schema\".\"tmp_" . $_GET['tbl'] . "\"";
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"", "sum(\"packetDeltaCount\") as \"packetDeltaCount\"");
     $fieldlist = array("sourceIPv4Address", "sourceTransportPort", "protocolIdentifier");
 #Forming up required conditions
@@ -181,8 +207,11 @@ if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) 
         $limit = $_GET['limit'];
     }
 #Calculate total traffic
-    $query  = "SELECT " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition;";
+    $query  = "SELECT " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+    $query .= " UNION ";
+    $query .= "SELECT " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+    $query .= ") AS total;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
 #    $result['data']['total'][] = pg_fetch_row($res);
     $r = pg_fetch_row($res);
@@ -191,8 +220,13 @@ if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) 
     $result['data']['total'][] = $r;
 
 #Calculating total traffic for top hosts
-    $query  = "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition";
+    $query  = "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+    $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\")";
+    $query .= " UNION ";
+    $query .= "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+    $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\")";
+    $query .= ") AS total";
     $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\") ORDER BY \"octetDeltaCount\" DESC LIMIT $limit;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     while($r = pg_fetch_row($res)) {
@@ -202,8 +236,11 @@ if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) 
     }
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"");
 #Calculating chart data for all hosts
-    $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition";
+    $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition GROUP BY (\"unixseconds\")";
+    $query .= " UNION ";
+    $query .= "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition GROUP BY (\"unixseconds\")";
+    $query .= ") AS total";
     $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     $trace = array();
@@ -217,9 +254,15 @@ if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) 
     $result['data']['traces'][] = $trace;
 #Calculating charts data for top hosts
     foreach($result['data']['totalsources'] as $host) {
-        $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename";
-        $query .= " WHERE $condition";
+        $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
+        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
         $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"sourceTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+        $query .= " GROUP BY (\"unixseconds\")";
+        $query .= " UNION ";
+        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+        $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"sourceTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+        $query .= " GROUP BY (\"unixseconds\")";
+        $query .= ") AS total";
         $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
         $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
         $trace = array();
@@ -235,7 +278,8 @@ if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) 
 }
 
 if (isset($_GET['ipv4destinations']) && isset($_GET['tbl']) && isset($_GET['start']) && isset($_GET['end'])) {
-    $tablename = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_raw = "\"$analyzer_schema\".\"raw_" . $_GET['tbl'] . "\"";
+    $tablename_tmp = "\"$analyzer_schema\".\"tmp_" . $_GET['tbl'] . "\"";
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"", "sum(\"packetDeltaCount\") as \"packetDeltaCount\"");
     $fieldlist = array("destinationIPv4Address", "destinationTransportPort", "protocolIdentifier");
 #Forming up required conditions
@@ -288,8 +332,11 @@ if (isset($_GET['ipv4destinations']) && isset($_GET['tbl']) && isset($_GET['star
         $limit = $_GET['limit'];
     }
 #Calculate total traffic
-    $query  = "SELECT " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition;";
+    $query  = "SELECT " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+    $query .= " UNION ";
+    $query .= "SELECT " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+    $query .= ") AS total;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
 #    $result['data']['total'][] = pg_fetch_row($res);
     $r = pg_fetch_row($res);
@@ -298,8 +345,13 @@ if (isset($_GET['ipv4destinations']) && isset($_GET['tbl']) && isset($_GET['star
     $result['data']['total'][] = $r;
 
 #Calculating total traffic for top hosts
-    $query  = "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition";
+    $query  = "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+    $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\")";
+    $query .= " UNION ";
+    $query .= "SELECT \"" . implode("\", \"", $fieldlist) . "\", " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+    $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\")";
+    $query .= ") AS total";
     $query .= " GROUP BY (\"" . implode("\",\"", $fieldlist) . "\") ORDER BY \"octetDeltaCount\" DESC LIMIT $limit;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     while($r = pg_fetch_row($res)) {
@@ -309,8 +361,11 @@ if (isset($_GET['ipv4destinations']) && isset($_GET['tbl']) && isset($_GET['star
     }
     $field_sum = array("sum(\"octetDeltaCount\") as \"octetDeltaCount\"");
 #Calculating chart data for all hosts
-    $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename";
-    $query .= " WHERE $condition";
+    $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM (";
+    $query .= "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition GROUP BY (\"unixseconds\")";
+    $query .= " UNION ";
+    $query .= "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition GROUP BY (\"unixseconds\")";
+    $query .= ") AS total";
     $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
     $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
     $trace = array();
@@ -324,9 +379,15 @@ if (isset($_GET['ipv4destinations']) && isset($_GET['tbl']) && isset($_GET['star
     $result['data']['traces'][] = $trace;
 #Calculating charts data for top hosts
     foreach($result['data']['totaldestinations'] as $host) {
-        $query  = "SELECT \"unixseconds\", " . implode(", ", $field_sum) . " FROM $tablename";
-        $query .= " WHERE $condition";
+        $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
+        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
         $query .= " AND \"destinationIPv4Address\"='$host[0]' AND \"destinationTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+        $query .= " GROUP BY (\"unixseconds\")";
+        $query .= " UNION ";
+        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+        $query .= " AND \"destinationIPv4Address\"='$host[0]' AND \"destinationTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+        $query .= " GROUP BY (\"unixseconds\")";
+        $query .= ") AS total";
         $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
         $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
         $trace = array();

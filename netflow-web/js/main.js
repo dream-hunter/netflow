@@ -1661,7 +1661,7 @@ function addStatistics(tables) {
             AddElement("div","statistics-table-dbinfo","statistics-table-dbinfo"+i,"class_table_row");
             AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_5");
             AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_25",tables[i].table_name);
-            AddElement("div","statistics-table-dbdbinfo"+i,null,"class_table_cell_10",tables[i].indexes_size);
+            AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables[i].indexes_size);
             AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables[i].table_size);
             AddElement("div","statistics-table-dbinfo"+i,null,"class_table_cell_10",tables[i].total_size);
             indexes_size_total += sizeToBytes(tables[i].indexes_size);
