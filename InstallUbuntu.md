@@ -1,4 +1,4 @@
-# Installation guide
+# All-in-one server installation guide
 There is the three big steps to see netflow data on your dashboard:
 
 1. Netflow collector installation;
@@ -10,59 +10,56 @@ There is the three big steps to see netflow data on your dashboard:
 ## Before start
 
 ### Netflow server pre-installation guide
-*You need root permissions to perform installation*
+*You need superuser permissions to perform installation*
 
 1. Install OS on your server;
 
 2. Update/upgrade it's ports/packages collection:
 ```
-pkg update
-pkg upgrade
+sudo apt update
+sudo apt upgrade -y
 ```
 
 3. Install required software:
 ```
-pkg install perl5 p5-App-cpanminus p5-App-cpanoutdated p5-JSON p5-DateTime p5-DBI p5-DBD-Pg postgresql13-server git
-```
-If you going install netflow-analyzer and/or netflow-web, you need also:
-```
-pkg install apache24 php81 php81-pgsql mod_php81 php81-extensions php81-snmp
+sudo apt install -y dialog ntpdate git perl cpanminus cpanoutdated postgresql libdbd-pg-perl libdatetime-perl apache2 php8.1 php8.1-pgsql php8.1-snmp
 ```
 
 4. Configure, initiate and start your local DB server:
 ```
-echo postgresql_enable="YES" >> /etc/rc.conf
-echo "listen_addresses = '*'" >> /var/db/postgres/data13/postgresql.conf
-echo "host netflow netflow 0.0.0.0/0 trust" >> /var/db/postgres/data13/pg_hba.conf
-/usr/local/etc/rc.d/postgresql initdb
-/usr/local/etc/rc.d/postgresql start
+echo "listen_addresses='*'" | sudo tee -a /etc/postgresql/14/main/postgresql.conf
+echo "host netflow netflow 0.0.0.0/0 trust" | sudo tee -a /etc/postgresql/14/main/pg_hba.conf
+sudo service postgresql restart
+sudo -u postgres psql
+ALTER USER postgres with password 'yourpassword';
+exit
 ```
 *Note: It's better to replace 0.0.0.0/0 to your analyzer server ip in pg_hba.conf. For example "host netflow netflow 10.10.10.10/32 trust*".
 
 5. Update/Install Perl modules:
 ```
-cpanm App::cpanoutdated
-cpan-outdated -p | cpanm
-cpanm Daemon::Daemonize
+sudo cpanm App::cpanoutdated
+sudo cpan-outdated -p | sudo cpanm
+sudo cpanm Daemon::Daemonize
 ```
 
 6. Synchronize your server clock with NTP time server:
 ```
-ntpdate <your.ntp.server.address>
+sudo ntpdate <your.ntp.server.address>
 ```
 
 7. Create user netflow and set it's password:
 ```
-pw useradd -n netflow -d /home/netflow -m -s /bin/csh -c 'netflow user'
-passwd netflow
+sudo adduser netflow
 ```
 
 8. To be able to start collector and/or analyzer as daemon, you need to grant access rights for log and pid files:
 ```
-touch /var/log/netflow.log
-chown -R netflow:netflow /var/log/netflow.log
-mkdir /var/run/netflow
-chown -R netflow:netflow /var/run/netflow
+sudo touch /var/log/netflow.log
+sudo chown -R netflow:netflow /var/log/netflow.log
+sudo mkdir /var/run/netflow
+sudo chown -R netflow:netflow /var/run/netflow
+echo "d /run/netflow 2775 netflow netflow - -" | sudo tee -a /usr/lib/tmpfiles.d/netflow-common.conf
 ```
 
 ## System configuration
