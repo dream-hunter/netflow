@@ -126,29 +126,31 @@ if (isset($_GET['ipv4sessions']) && isset($_GET['tbl']) && isset($_GET['start'])
     }
     $result['data']['traces'][] = $trace;
 #Calculating charts data for top hosts
-    foreach($result['data']['totalhosts'] as $host) {
-        $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
-        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
-        $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"destinationIPv4Address\"='$host[1]' AND \"sourceTransportPort\"='$host[2]' AND \"destinationTransportPort\"='$host[3]' AND \"protocolIdentifier\"='$host[4]'";
-        $query .= " GROUP BY (\"unixseconds\")";
-        $query .= " UNION ";
-        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
-        $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"destinationIPv4Address\"='$host[1]' AND \"sourceTransportPort\"='$host[2]' AND \"destinationTransportPort\"='$host[3]' AND \"protocolIdentifier\"='$host[4]'";
-        $query .= " GROUP BY (\"unixseconds\")";
-        $query .= ") AS total";
-        $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
+    if (isset($result['data']['totalhosts'])) {
+        foreach($result['data']['totalhosts'] as $host) {
+            $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
+            $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+            $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"destinationIPv4Address\"='$host[1]' AND \"sourceTransportPort\"='$host[2]' AND \"destinationTransportPort\"='$host[3]' AND \"protocolIdentifier\"='$host[4]'";
+            $query .= " GROUP BY (\"unixseconds\")";
+            $query .= " UNION ";
+            $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+            $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"destinationIPv4Address\"='$host[1]' AND \"sourceTransportPort\"='$host[2]' AND \"destinationTransportPort\"='$host[3]' AND \"protocolIdentifier\"='$host[4]'";
+            $query .= " GROUP BY (\"unixseconds\")";
+            $query .= ") AS total";
+            $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
 #        echo $query;
 #        $result['query'][] = $query;
-        $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
-        $trace = array();
-        $trace['name'] = "$host[0]($host[2]) -> $host[1]($host[3]) Proto($host[4])";
-        $trace['stackgroup'] = "two";
-        while($r = pg_fetch_row($res)) {
-            $r[1] *= $sampling;
-            $trace['x'][] = date("Y-m-d H:i:s", $r[0]);
-            $trace['y'][] = $r[1]*8/$data_interval;
+            $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+            $trace = array();
+            $trace['name'] = "$host[0]($host[2]) -> $host[1]($host[3]) Proto($host[4])";
+            $trace['stackgroup'] = "two";
+            while($r = pg_fetch_row($res)) {
+                $r[1] *= $sampling;
+                $trace['x'][] = date("Y-m-d H:i:s", $r[0]);
+                $trace['y'][] = $r[1]*8/$data_interval;
+            }
+            $result['data']['traces'][] = $trace;
         }
-        $result['data']['traces'][] = $trace;
     }
 }
 
@@ -253,27 +255,29 @@ if (isset($_GET['ipv4sources']) && isset($_GET['tbl']) && isset($_GET['start']) 
     }
     $result['data']['traces'][] = $trace;
 #Calculating charts data for top hosts
-    foreach($result['data']['totalsources'] as $host) {
-        $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
-        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
-        $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"sourceTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
-        $query .= " GROUP BY (\"unixseconds\")";
-        $query .= " UNION ";
-        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
-        $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"sourceTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
-        $query .= " GROUP BY (\"unixseconds\")";
-        $query .= ") AS total";
-        $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
-        $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
-        $trace = array();
-        $trace['name'] = "$host[0]($host[1]) Proto($host[2])";
-        $trace['stackgroup'] = "two";
-        while($r = pg_fetch_row($res)) {
-            $r[1] *= $sampling;
-            $trace['x'][] = date("Y-m-d H:i:s", $r[0]);
-            $trace['y'][] = $r[1]*8/$data_interval;
+    if (isset($result['data']['totalsources'])) {
+        foreach($result['data']['totalsources'] as $host) {
+            $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
+            $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+            $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"sourceTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+            $query .= " GROUP BY (\"unixseconds\")";
+            $query .= " UNION ";
+            $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+            $query .= " AND \"sourceIPv4Address\"='$host[0]' AND \"sourceTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+            $query .= " GROUP BY (\"unixseconds\")";
+            $query .= ") AS total";
+            $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
+            $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+            $trace = array();
+            $trace['name'] = "$host[0]($host[1]) Proto($host[2])";
+            $trace['stackgroup'] = "two";
+            while($r = pg_fetch_row($res)) {
+                $r[1] *= $sampling;
+                $trace['x'][] = date("Y-m-d H:i:s", $r[0]);
+                $trace['y'][] = $r[1]*8/$data_interval;
+            }
+            $result['data']['traces'][] = $trace;
         }
-        $result['data']['traces'][] = $trace;
     }
 }
 
@@ -378,27 +382,29 @@ if (isset($_GET['ipv4destinations']) && isset($_GET['tbl']) && isset($_GET['star
     }
     $result['data']['traces'][] = $trace;
 #Calculating charts data for top hosts
-    foreach($result['data']['totaldestinations'] as $host) {
-        $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
-        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
-        $query .= " AND \"destinationIPv4Address\"='$host[0]' AND \"destinationTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
-        $query .= " GROUP BY (\"unixseconds\")";
-        $query .= " UNION ";
-        $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
-        $query .= " AND \"destinationIPv4Address\"='$host[0]' AND \"destinationTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
-        $query .= " GROUP BY (\"unixseconds\")";
-        $query .= ") AS total";
-        $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
-        $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
-        $trace = array();
-        $trace['name'] = "$host[0]($host[1]) Proto($host[2])";
-        $trace['stackgroup'] = "two";
-        while($r = pg_fetch_row($res)) {
-            $r[1] *= $sampling;
-            $trace['x'][] = date("Y-m-d H:i:s", $r[0]);
-            $trace['y'][] = $r[1]*8/$data_interval;
+    if (isset($result['data']['totaldestinations'])) {
+        foreach($result['data']['totaldestinations'] as $host) {
+            $query  = "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM (";
+            $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_raw WHERE $condition";
+            $query .= " AND \"destinationIPv4Address\"='$host[0]' AND \"destinationTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+            $query .= " GROUP BY (\"unixseconds\")";
+            $query .= " UNION ";
+            $query .= "SELECT \"unixseconds\" , " . implode(", ", $field_sum) . " FROM $tablename_tmp WHERE $condition";
+            $query .= " AND \"destinationIPv4Address\"='$host[0]' AND \"destinationTransportPort\"='$host[1]' AND \"protocolIdentifier\"='$host[2]'";
+            $query .= " GROUP BY (\"unixseconds\")";
+            $query .= ") AS total";
+            $query .= " GROUP BY (\"unixseconds\") ORDER BY \"unixseconds\" ASC;";
+            $res = pg_query($dbi, $query) or die('Error: ' . pg_last_error());
+            $trace = array();
+            $trace['name'] = "$host[0]($host[1]) Proto($host[2])";
+            $trace['stackgroup'] = "two";
+            while($r = pg_fetch_row($res)) {
+                $r[1] *= $sampling;
+                $trace['x'][] = date("Y-m-d H:i:s", $r[0]);
+                $trace['y'][] = $r[1]*8/$data_interval;
+            }
+            $result['data']['traces'][] = $trace;
         }
-        $result['data']['traces'][] = $trace;
     }
 }
 

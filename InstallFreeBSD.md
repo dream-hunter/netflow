@@ -1,4 +1,4 @@
-# Installation guide
+# All-in-one server installation guide
 There is the three big steps to see netflow data on your dashboard:
 
 1. Netflow collector installation;
@@ -22,11 +22,7 @@ pkg upgrade
 
 3. Install required software:
 ```
-pkg install perl5 p5-App-cpanminus p5-App-cpanoutdated p5-JSON p5-DateTime p5-DBI p5-DBD-Pg postgresql13-server git
-```
-If you going install netflow-analyzer and/or netflow-web, you need also:
-```
-pkg install apache24 php81 php81-pgsql mod_php81 php81-extensions php81-snmp
+pkg install perl5 p5-App-cpanminus p5-App-cpanoutdated p5-JSON p5-DateTime p5-DBI p5-DBD-Pg postgresql13-server git apache24 php81 php81-pgsql mod_php81 php81-extensions php81-snmp
 ```
 
 4. Configure, initiate and start your local DB server:

@@ -1308,7 +1308,7 @@ function showRawDataDetail(data) {
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[2]]+"("+row[2]+")");
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[3]));
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
         }
         var row = data.total[0];
@@ -1317,7 +1317,7 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10");
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[0]));
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
         var plotDiv = document.getElementById('plot');
@@ -1352,7 +1352,7 @@ function showRawDataDetail(data) {
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_15",row[0]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",proto_id[row[2]]+"("+row[2]+")");
-            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[3]);
+            AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[3]));
             AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[4]);
         }
         var row = data.total[0];
@@ -1361,7 +1361,7 @@ function showRawDataDetail(data) {
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_5");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_25","Total");
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10");
-        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[0]);
+        AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",bytesToSize(row[0]));
         AddElement("div","table-raw-data-row-"+i,null,"class_table_cell_10",row[1]);
 
         var plotDiv = document.getElementById('plot');

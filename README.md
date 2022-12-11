@@ -79,6 +79,7 @@ There is a few examples how-to configure routers to send netflow data to collect
 
  **0.1.4**
 
+- 11.12.2022 - Edited ubuntu installation guides;
 - 06.12.2022 - Added schemas information into dashboard tab;
 - 06.12.2022 - Added statistics tab that shows tables size information in database;
 
