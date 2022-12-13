@@ -1653,7 +1653,7 @@ function clearStatisticsTab() {
 }
 
 function addStatistics(tables) {
-    if (typeof links !== 'undefined' && links !== null) {
+    if (typeof tables !== 'undefined' && tables !== null) {
         var indexes_size_total = 0;
         var table_size_total = 0;
         var total_size_total = 0;
