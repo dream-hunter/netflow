@@ -30,7 +30,7 @@ echo postgresql_enable="YES" >> /etc/rc.conf
 
 Optionally you can allow access to netflow database for remote hosts
 ```
-echo "listen_addresses = '*'" >> /var/db/postgres/data14/postgresql.conf
+echo "listen_addresses = '*'" >> /var/db/postgres/data13/postgresql.conf
 echo "host netflow netflow 0.0.0.0/0 trust" >> /var/db/postgres/data13/pg_hba.conf
 ```
 *Note: It is better to replace 0.0.0.0/0 with a specific server IP address in pg_hba.conf. For example "host netflow netflow 10.10.10.10/32 trust".*
