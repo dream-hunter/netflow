@@ -293,8 +293,8 @@ sub v5thread {
         if ($v5queue->{$peer_address}->pending) {
             my $received_data = $v5queue->{$peer_address}->dequeue;
             my $data_length   = length($received_data);
-            logmessage("v5 thread #$peer_address got data ($data_length bytes). Processing...\n", $loglevel-2);
             my ($version, $count, $system_uptime, $unix_seconds, $unix_nseconds, $package_sequence, $source_type, $source_id, $sampling) = unpack("n2N4HHn", substr($received_data,0,24));
+            logmessage("v5 thread #$peer_address got data ($data_length bytes). Sampling rate - $sampling. Processing...\n", $loglevel-2);
             my @records;
             for (my $i=0; substr($received_data, 24+48*$i, 48); $i++) {
                 my @substr = unpack("N3n2N4n2C4n2C2n", substr($received_data, 24+48*$i, 48));
@@ -401,75 +401,69 @@ sub v9thread {
         if ($v9queue->{$peer_address}->pending) {
             my $received_data = $v9queue->{$peer_address}->dequeue;
             my $data_length   = length($received_data);
-            logmessage("v9 thread #$peer_address got data ($data_length bytes). Processing...\n", $loglevel-2);
+            logmessage("v9 thread #$peer_address got data ($data_length bytes).", $loglevel-2);
             my ($version, $count, $system_uptime, $unix_seconds, $package_sequence, $source_id) = unpack("n2N4", substr($received_data,0,20));
+            logmessage(" Processing $count records.\n", $loglevel-2);
             my $marker = 20;
             for ($i=0; $i < $count; $i++) {
                 my ($flowset_id, $length) = unpack("n2", substr($received_data,$marker,4));
-                if ($flowset_id == 0) {
 # Template processing
-                    logmessage(" - got template data:\n", $loglevel-4);
-                    $length += $marker;
-                    $marker += 4;
-                    while ($marker < $length) {
-                        my ($template_id, $field_count) = unpack("n2",substr($received_data,$marker,4));
-                        $marker += 4;
-                        my $template_data = substr ($received_data, $marker, $field_count * 4);
-                        my (@n,@l);
-                        for (my $j=0; $j<$field_count;$j++) {
-                            push @n, (unpack("n", substr($template_data, $j*4,2)));
-                            push @l, (unpack("n", substr($template_data, $j*4+2,2))*2);
-                        }
-                        my $template_format = "H".join("H",@l);
-                        my $template_header = join(";",@n);
-                        my $template_length = 0;
-                        $template_length += $_/2 foreach @l;
+                logmessage(" Record #$i:", $loglevel-2);
+                if (defined $flowset_id && $flowset_id == 0) {
+                    logmessage(" - template data ($length bytes)\n", $loglevel-2);
+                    my $dataset = substr($received_data,$marker,$length);
+                    my $template_id = unpack("n2",substr($dataset,4,2));
+                    if (!defined $templates->{$template_id}) {
+                        $templates->{$template_id} = dclone (fv9_template_handle($dataset));
+                        print Dumper $templates->{$template_id};
 
-                        if (!defined $templates->{$template_id}) {
-                            $templates->{$template_id}->{"template_format"} = $template_format;
-                            $templates->{$template_id}->{"template_header"} = $template_header;
-                            $templates->{$template_id}->{"template_length"} = $template_length;
-                            print Dumper $templates;
-                            my $fields = ["device_id","template_id","template_length","template_header","template_format","template_sampling","template_enabled"];
-                            my $values = ["$peer_address','$template_id','$template_length','$template_header','$template_format','0','0"];
-                                my $result = pgsql_table_insert($config,"v9templates", $fields, $values, $loglevel);
+                        my $fields = ["device_id","template_id","template_length","template_header","template_format","template_sampling","template_enabled"];
+                        my $values = ["$peer_address','$template_id','$templates->{$template_id}->{template_length}','$templates->{$template_id}->{template_header}','$templates->{$template_id}->{template_format}','0','0"];
+                        my $result = pgsql_table_insert($config,"v9templates", $fields, $values, $loglevel);
+                    } else {
+                        my $result;
+                        $result = pgsql_table_select($config,"*", "v9templates", "device_id='$peer_address' AND template_id='$template_id'", $loglevel);
+                        my $template = table_serialise($result, "template_id", $loglevel);
+                        if (($template->{$template_id}->{template_length} eq $templates->{$template_id}->{template_length}) &&
+                            ($template->{$template_id}->{template_format} eq $templates->{$template_id}->{template_format}) &&
+                            ($template->{$template_id}->{template_header} eq $templates->{$template_id}->{template_header})) {
+                            logmessage("Template looks fine\n", $loglevel);
+                            $templates->{$template_id} = dclone $template->{$template_id};
                         } else {
-                            my $result;
-                            $result = pgsql_table_select($config,"*", "v9templates", "device_id='$peer_address' AND template_id='$template_id'", $loglevel);
-                            my $template = table_serialise($result, "template_id", $loglevel);
-                            if (($template->{$template_id}->{template_length} eq $templates->{$template_id}->{template_length}) &&
-                                ($template->{$template_id}->{template_format} eq $templates->{$template_id}->{template_format}) &&
-                                ($template->{$template_id}->{template_header} eq $templates->{$template_id}->{template_header})) {
-                                logmessage("Template looks fine\n", $loglevel);
-                                $templates->{$template_id} = dclone $template->{$template_id};
-                            } else {
-                                logmessage("Problem with template\n", $loglevel);
-                                print Dumper $template;
-                                print Dumper $templates;
-                                exit 0;
-                            }
+                            logmessage("Problem with template\n", $loglevel);
+                            print Dumper $template;
+                            print Dumper $templates;
+                            exit 0;
                         }
-                        $marker += $field_count*4;
                     }
-                } else {
+                } elsif (defined $flowset_id && $flowset_id >= 255) {
 # Netflow data processing
-                    logmessage(" - got netflow data:\n", $loglevel-4);
+                    logmessage(" - netflow data. id: $flowset_id; length: $length bytes.\n", $loglevel-2);
 
                     if (defined $templates->{$flowset_id} && $templates->{$flowset_id}->{"template_length"} > 0) {
-                        my $template = $templates->{$flowset_id};
-                        logmessage("\tTIMERS: $system_uptime - $unix_seconds;\n\tROW LENGHT: $template->{\"template_length\"} bytes\n",  $loglevel-4);
-                        my ($j, @records) = fv9_records(substr($received_data, $marker, $length), $length, $template->{"template_format"}, $template->{"template_length"}, $system_uptime, $unix_seconds);
-                        $i += $j;
-                        $marker += $template->{"template_length"}*$j+4;
-                        my $msg = join("\n", @records);
-                        logmessage("$msg\n", $loglevel-5);
-                        @{ $data->{$flowset_id}->{"template_header"} } = split(";",$templates->{$flowset_id}->{"template_header"});
-                        @{ $data->{$flowset_id}->{"template_format"} } = split("H",$templates->{$flowset_id}->{"template_format"});
-                        shift (@{ $data->{$flowset_id}->{"template_format"} });
                         if (defined $templates->{$flowset_id}->{"template_enabled"} && $templates->{$flowset_id}->{"template_enabled"} == 1) {
-                            push @{ $data->{$flowset_id}->{"records"} }, @records;
+                            my $template = $templates->{$flowset_id};
+                            logmessage("\tTIMERS: $system_uptime - $unix_seconds;\n\tROW LENGTH: $template->{\"template_length\"} bytes\n",  $loglevel-4);
+                            my ($j, @records) = fv9_records(substr($received_data, $marker, $length), $length, $template, $system_uptime, $unix_seconds);
+                            $i += $j;
+                            my $msg = join("\n", @records);
+                            logmessage("$msg\n", $loglevel-5);
+                            @{ $data->{$flowset_id}->{"template_header"} } = split(";",$templates->{$flowset_id}->{"template_header"});
+                            @{ $data->{$flowset_id}->{"template_format"} } = split("H",$templates->{$flowset_id}->{"template_format"});
+                            shift (@{ $data->{$flowset_id}->{"template_format"} });
+                            if (defined $templates->{$flowset_id}->{"template_enabled"} && $templates->{$flowset_id}->{"template_enabled"} == 1) {
+                                push @{ $data->{$flowset_id}->{"records"} }, @records;
+                            }
+                        } else {
+                            logmessage ("Template not enabled - flowset has been skipped.\n", $loglevel-4);
                         }
                     }
+                } else {
+                    logmessage(" - unknown data. id: $flowset_id; length: $length bytes.\n", $loglevel-2);
+                }
+                $marker += $length;
+                if ($marker >= $data_length) {
+                    last;
                 }
             }
         } else {
@@ -482,22 +476,46 @@ sub v9thread {
     if (defined $templates) { return $templates; } else { return undef; }
 }
 
+sub fv9_template_handle {
+    my $dataset = $_[0];
+    my $marker = 4;
+    my $result = undef;
+    my $length = length($dataset);
+    my ($template_id, $field_count) = unpack("n2",substr($dataset,$marker,4));
+    $marker += 4;
+    my $template_data = substr ($dataset, $marker, $field_count * 4);
+    my (@n,@l);
+    for (my $j=0; $j<$field_count;$j++) {
+        push @n, (unpack("n", substr($template_data, $j*4,2))) || last;
+        push @l, (unpack("n", substr($template_data, $j*4+2,2))*2) || last;
+    }
+
+    my $template_length = 0;
+    $template_length += $_/2 foreach @l;
+
+    $result->{"template_format"} = "H".join("H",@l);
+    $result->{"template_header"} = join(";",@n);
+    $result->{"template_length"} = $template_length;
+
+    return $result;
+}
+
 sub fv9_records {
     my $data             = $_[0];
     my $length           = $_[1];
-    my $template_format  = $_[2];
-    my $template_length  = $_[3];
-    my $system_uptime    = $_[4];
-    my $unix_seconds     = $_[5];
+    my $template         = $_[2];
+    my $system_uptime    = $_[3];
+    my $unix_seconds     = $_[4];
 
     my $marker = 4;
-    my ($count, @substr, @records);
-    while ($marker+$template_length <= $length) {
-        my $substr = substr ($data, $marker, $template_length);
-        @substr =  unpack ($template_format, $substr);
+    my $count = 0;
+    my (@substr, @records);
+    while ($marker+$template->{'template_length'} <= $length) {
+        my $substr = substr ($data, $marker, $template->{'template_length'});
+        @substr =  unpack ($template->{'template_format'}, $substr);
         unshift(@substr, $unix_seconds);
         unshift(@substr, $system_uptime);
-        $marker += $template_length;
+        $marker += $template->{'template_length'};
         $count ++;
         push @records, join ("','", @substr);
     }
