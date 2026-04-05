@@ -18,7 +18,7 @@ use service_handler qw { dec2ip ip2dec table_serialise data_serialise };
 use pgsql_handler   qw { pgsql_check pgsql_table_insert pgsql_table_insert_from pgsql_table_select pgsql_table_drop pgsql_table_create pgsql_table_check pgsql_table_delete pgsql_table_update };
 
 logmessage ("Begin programm...\n",10);
-my $loglevel    = 5;
+my $loglevel    = 10;
 my $configfile  = 'config.json';
 
 my $globalconfig  = getconfig("config.json",$loglevel-4);
@@ -175,19 +175,19 @@ sub binanalyze {
         'unsigned64'           => ['numeric', '20','NO'],
 #    'basicList'            => ['', undef,'NO'],
         'dateTimeSeconds'      => ['bigint', undef,'NO'],
-        'dateTimeMicroseconds' => ['', undef,'NO'],
+        'dateTimeMicroseconds' => ['bigint', undef,'NO'],
         'dateTimeNanoseconds'  => ['bigint', undef,'NO'],
         'boolean'              => ['boolean', undef,'NO'],
         'string'               => ['text', undef,'NO'],
 #    'subTemplateList'      => ['', undef,'NO'],
-        'macAddress'           => ['', undef,'NO'],
+        'macAddress'           => ['macaddr8', undef,'NO'],
         'ipv6Address'          => ['inet', undef,'NO'],
         'ipv4Address'          => ['inet', undef,'NO'],
         'dateTimeMilliseconds' => ['bigint', undef,'NO'],
         'octetArray'           => ['character varying',100,'YES'],
 #    'subTemplateMultiList' => ['', undef,'NO'],
         'signed32'             => ['integer', undef,'NO'],
-        'float64'              => ['', undef,'NO'],
+        'float64'              => ['bigint', undef,'NO'],
     };
 
     foreach my $dst (keys %{ $config->{"dstdb"}} ) {
@@ -382,6 +382,12 @@ sub v9binanalyze {
                                 }
                                 if ($ipfix->{$fields[$key]}->{'data_type'} eq 'ipv4Address' ) {
                                     push @values, dec2ip(hex($cells[$key]));
+                                    next;
+                                }
+                                if ($ipfix->{$fields[$key]}->{'data_type'} eq 'macAddress' ) {
+#                                    print "\nValue: '" .$cells[$key] . "'\n";
+#                                    exit 0;
+                                    push @values, $cells[$key];
                                     next;
                                 }
                                 push @values, hex($cells[$key]);

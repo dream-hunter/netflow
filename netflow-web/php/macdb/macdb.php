@@ -1,5 +1,5 @@
 <?php
-    require_once "read_cache.php"; // Пытаемся вывести содержимое кэша
+    //require_once "read_cache.php"; // Пытаемся вывести содержимое кэша
     // Здесь идёт обычная генерация страницы
     $array = array();
     $row = 1;

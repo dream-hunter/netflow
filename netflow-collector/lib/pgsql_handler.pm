@@ -113,10 +113,12 @@ sub pgsql_table_create {
     if (defined $db) {
         foreach my $header (values @{ $table_header }) {
 #            print $table_header->[$key] . "\n";
+            $header->[0] =~ tr/"//d; #remove double " symbol
             $header->[0] = "\"".$header->[0]."\"";
             if ($header->[3] eq "NO")  { $header->[3] = "NOT NULL"; }
             if ($header->[3] eq "YES") { $header->[3] = undef; }
             if (defined $header->[2] && $header->[2] ne "" ) { $header->[2] = "($header->[2])"; }
+            if (defined $header->[1] && $header->[1] eq "bigint") {$header->[2] = undef; }
             push (@{ $fields }, join(" ", @{ $header }));
         }
         print Dumper $fields;
@@ -165,6 +167,9 @@ sub pgsql_table_check {
                     $table_header->[$key]->[2] = "0,$table_header->[$key]->[2]";
                 }
                 if ($table_header->[$key]->[1] eq "bigint") {
+                    $table_header->[$key]->[2] = "8";
+                }
+                if ($table_header->[$key]->[1] eq "macaddr8") {
                     $table_header->[$key]->[2] = "8";
                 }
                 if ($table_header->[$key]->[1] eq "integer") {
