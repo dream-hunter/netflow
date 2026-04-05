@@ -353,32 +353,34 @@ sub pgsql_table_insert_from {
     my $db = pgsql_connect($config, $loglevel);
 
 
-    if (defined $db && defined $table_src && defined $fields_src && defined $table_dst && defined $fields_dst) {
-        $fields_src = join("\", \"", @{ $fields_src });
+    if (defined $db) {
+        if (defined $table_src && defined $fields_src && defined $table_dst && defined $fields_dst) {
+            $fields_src = join("\", \"", @{ $fields_src });
 
-        $fields_dst = join("\", \"", @{ $fields_dst });
-        $group_by = join("\", \"", @{ $group_by });
+            $fields_dst = join("\", \"", @{ $fields_dst });
+            $group_by = join("\", \"", @{ $group_by });
 
-        my $query = "INSERT INTO $schema.$table_dst (\"$fields_dst\") (SELECT \"$fields_src\" FROM $schema.$table_src";
-        if (defined $where) {
-            $query .= " WHERE $where";
+            my $query = "INSERT INTO $schema.$table_dst (\"$fields_dst\") (SELECT \"$fields_src\" FROM $schema.$table_src";
+            if (defined $where) {
+                $query .= " WHERE $where";
+            }
+            if (defined $group_by) {
+                $query .= " GROUP BY \"$group_by\"";
+            }
+            $query .= ");";
+
+            $query = join("sum", split("\"sum", $query));
+            $query = join(")", split(/\)\"/, $query));
+
+            logmessage ("$query\n", $loglevel);
+            my $request = $db->prepare($query);
+            $request->execute();
+            warn "Data fetching terminated early by error: $DBI::errstr\n" if $DBI::err;
+#            $request->execute() or die $DBI::errstr;
+
+            $result=$request->{pgsql_insertid};
+            $request->finish();
         }
-        if (defined $group_by) {
-            $query .= " GROUP BY \"$group_by\"";
-        }
-        $query .= ");";
-
-        $query = join("sum", split("\"sum", $query));
-        $query = join(")", split(/\)\"/, $query));
-
-        logmessage ("$query\n", $loglevel);
-        my $request = $db->prepare($query);
-        $request->execute();
-        warn "Data fetching terminated early by error: $DBI::errstr\n" if $DBI::err;
-#        $request->execute() or die $DBI::errstr;
-
-        $result=$request->{pgsql_insertid};
-        $request->finish();
         $db->disconnect;
     }
     return $result;

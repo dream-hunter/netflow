@@ -77,11 +77,16 @@ There is a few examples how-to configure routers to send netflow data to collect
 
 # Changelog:
 
+ **0.1.5**
+
+- 05.04.2026 - Fixed problems with Collector stop cause of Database unavailability;
+- 05.04.2026 - Added capatibility with Eltex devices.
+
  **0.1.4**
 
 - 11.12.2022 - Edited ubuntu installation guides;
 - 06.12.2022 - Added schemas information into dashboard tab;
-- 06.12.2022 - Added statistics tab that shows tables size information in database;
+- 06.12.2022 - Added statistics tab that shows tables size information in database.
 
  **0.1.3a**
 

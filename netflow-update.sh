@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo 'config.json' > .gitignore
 echo 'config.php' >> .gitignore

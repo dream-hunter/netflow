@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 
 use lib '.';
 use lib './lib/';
@@ -423,17 +423,21 @@ sub v9thread {
                     } else {
                         my $result;
                         $result = pgsql_table_select($config,"*", "v9templates", "device_id='$peer_address' AND template_id='$template_id'", $loglevel);
-                        my $template = table_serialise($result, "template_id", $loglevel);
-                        if (($template->{$template_id}->{template_length} eq $templates->{$template_id}->{template_length}) &&
-                            ($template->{$template_id}->{template_format} eq $templates->{$template_id}->{template_format}) &&
-                            ($template->{$template_id}->{template_header} eq $templates->{$template_id}->{template_header})) {
-                            logmessage("Template looks fine\n", $loglevel);
-                            $templates->{$template_id} = dclone $template->{$template_id};
+                        if (defined $result) {
+                            my $template = table_serialise($result, "template_id", $loglevel);
+                            if (($template->{$template_id}->{template_length} eq $templates->{$template_id}->{template_length}) &&
+                                ($template->{$template_id}->{template_format} eq $templates->{$template_id}->{template_format}) &&
+                                ($template->{$template_id}->{template_header} eq $templates->{$template_id}->{template_header})) {
+                                logmessage("Template looks fine\n", $loglevel);
+                                $templates->{$template_id} = dclone $template->{$template_id};
+                            } else {
+                                logmessage("Problem with template\n", $loglevel);
+                                print Dumper $template;
+                                print Dumper $templates;
+#                                exit 0;
+                            }
                         } else {
-                            logmessage("Problem with template\n", $loglevel);
-                            print Dumper $template;
-                            print Dumper $templates;
-                            exit 0;
+                                logmessage("Problem with DataBase request\n", $loglevel);
                         }
                     }
                 } elsif (defined $flowset_id && $flowset_id >= 255) {
