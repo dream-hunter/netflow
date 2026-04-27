@@ -507,6 +507,7 @@ function resolveMACDB() {
             console.error(err);
         } else {
             var macDB = data;
+//            console.log(macDB);
             DelElement("table-mac-data-table");
             AddElement("div","table-mac-data-output","table-mac-data-table","class_table");
             showMACDB(macDB);
@@ -520,7 +521,6 @@ function showMACDB(macDB) {
     var stringArr = new Array();
     var macList = document.getElementById("table-mac-data-input-text").value;
     stringList = macList.split("\n");
-
     for (var i=0;i<stringList.length;i++) {
         if (stringList[i] !== "") {
             stringArr = stringList[i].split(":");
@@ -537,7 +537,6 @@ function showMACDB(macDB) {
 
             stringList[i] = stringList[i].slice(0,6);
             stringList[i] = stringList[i].toUpperCase();
-
 
             if (typeof macDB.MAL[stringList[i]] !== 'undefined' && macDB.MAL[stringList[i]] !== null) {
                 AddElement("div","table-mac-data-table-row-"+i,null,"class_table_cell_25",macDB.MAL[stringList[i]].vendor_name);
