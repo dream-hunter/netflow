@@ -9,6 +9,7 @@ use warnings;
 use Data::Dumper;
 use JSON::PP::Boolean;
 use Storable qw(dclone);
+use Math::BigInt;
 
 use Daemon::Daemonize qw( daemonize write_pidfile );
 
@@ -385,12 +386,36 @@ sub v9binanalyze {
                                     next;
                                 }
                                 if ($ipfix->{$fields[$key]}->{'data_type'} eq 'macAddress' ) {
-#                                    print "\nValue: '" .$cells[$key] . "'\n";
-#                                    exit 0;
                                     push @values, $cells[$key];
                                     next;
                                 }
-                                push @values, hex($cells[$key]);
+                                if ($ipfix->{$fields[$key]}->{'data_type'} eq 'unsigned32' ) {
+#                                    print "Convert field with ID $key (". $ipfix->{$fields[$key]}->{'data_type'}.") value \'$cells[$key]\' -> " . Math::BigInt->new("0x" . $cells[$key]) . "\n";
+#                                    exit 0;
+#                                    push @values, $cells[$key];
+                                    push @values, Math::BigInt->new("0x" . $cells[$key]);
+                                    next;
+                                }
+                                if ($ipfix->{$fields[$key]}->{'data_type'} eq 'unsigned64' ) {
+#                                    print "Convert field with ID " . $fields[$key] . " (". $ipfix->{$fields[$key]}->{'data_type'}.") value \'$cells[$key]\' -> " . Math::BigInt->new("0x" . $cells[$key]) . "\n";
+#                                    exit 0;
+                                    push @values, Math::BigInt->new("0x" . $cells[$key]);
+                                    next;
+                                }
+                                if ($ipfix->{$fields[$key]}->{'data_type'} eq 'dateTimeMilliseconds' ) {
+#                                    print "Convert field with ID " . $fields[$key] . " (". $ipfix->{$fields[$key]}->{'data_type'}.") value \'$cells[$key]\' -> " . Math::BigInt->new("0x" . $cells[$key]) . "\n";
+#                                    exit 0;
+                                    push @values, Math::BigInt->new("0x" . $cells[$key]);
+                                    next;
+                                }
+
+                                my $length = length($cells[$key]);
+                                if ($length > 8) {
+                                    warn "Too long value ($length) in field with ID " . $fields[$key] . " : $cells[$key]";
+                                    push @values, '0';
+                                } else {
+                                    push @values, hex($cells[$key]);
+                                }
                             }
                             if (defined $flowstart && defined $flowend && defined $octets && defined $packets) {
                                 if ($flowstart == $flowend) {
